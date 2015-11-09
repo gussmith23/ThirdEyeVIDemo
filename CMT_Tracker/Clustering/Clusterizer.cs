@@ -43,9 +43,12 @@ namespace Clustering
         public static List<PointCluster<T>> CreateClusters<T>(List<PointF> points, List<T> labels, float maxDistance)
         {
             List<PointCluster<T>> initialClusters = new List<PointCluster<T>>();
-            for(int i = 0; i < points.Count; i++)
+            PointF[] pointsArray = points.ToArray();
+            T[] labelsArray = labels.ToArray();
+
+            for(int i = 0; i < pointsArray.Length; i++)
             {
-                initialClusters.Add(new PointCluster<T>(points[i], labels[i]));
+                initialClusters.Add(new PointCluster<T>(pointsArray[i], labelsArray[i]));
             }
 
             return Clusterize<T>(initialClusters, maxDistance);
@@ -55,13 +58,14 @@ namespace Clustering
         {
             float bestDistance = float.PositiveInfinity;
             Tuple<PointCluster<T>, PointCluster<T>> bestPair = null;
+            PointCluster<T>[] theClusters = clusters.ToArray();
 
             for(int i = 0; i < clusters.Count; i++)
             {
-                PointCluster<T> c1 = clusters[i];
+                PointCluster<T> c1 = theClusters[i];
                 for(int j = i + 1; j < clusters.Count; j++)
                 {
-                    PointCluster<T> c2 = clusters[j];
+                    PointCluster<T> c2 = theClusters[j];
                     float dist = c1.DistanceFrom(c2);
                     if (dist < bestDistance)
                     {

@@ -29,6 +29,14 @@ namespace CMT_Tracker
         private System.Timers.Timer mCaptureTimer;
         private Image<Bgr, Byte> trackFrame;
         private static Brisk featureDetector = new Brisk(30, 3, 1.0f);
+        private static SURFDetector SURF = new SURFDetector(400, false);
+
+        private bool outputBB = true;
+        private bool isInit = false;
+        private bool isTracking = false;
+        private StreamWriter outputFile;
+
+        private bool display = true;
 
         #region External Delegates
 
@@ -67,12 +75,35 @@ namespace CMT_Tracker
                 opticalFlowLevel, opticalFlowCriteria,
                 out bckPts, out bckStatus, out bckError);
         }
+
+        private static void ExternalSURFKeypoints(ref Image<Gray, Byte> frame, out MKeyPoint[] all_keypoints)
+        {
+            Console.WriteLine("External SURF Keypoint Detector");
+            all_keypoints = SURF.DetectKeyPoints(frame, null);
+        }
+        private static void ExternalSURFDescriptors(ref Image<Gray, Byte> frame, MKeyPoint[] keypoints, out Matrix<float> features)
+        {
+            Console.WriteLine("External SURF Keypoint Descriptor Extractor");
+            Emgu.CV.Util.VectorOfKeyPoint keypoint_vector = new Emgu.CV.Util.VectorOfKeyPoint();
+            keypoint_vector.Push(keypoints);
+            features = SURF.ComputeDescriptorsRaw(frame, null, keypoint_vector);
+        }
         #endregion
 
-        private string sourcePath = @"C:\Users\Matt\Desktop\Tracking Algorithms\CMT\cmt_dataset\board";
+        private string sourcePath; // = @"C:\Users\Josh\Desktop\Josh\Research\VOT_Toolkit_Videos\ball";
+
         public frmTrackMain()
         {
-            InitializeComponent();
+            //Console.WriteLine("STARTING CMT");
+
+            if(display)
+            {
+                InitializeComponent();
+                File.Create(@"C:\Users\Josh\Desktop\Josh\Research\CMT_Timings\totals.txt");
+                File.Create(@"C:\Users\Josh\Desktop\Josh\Research\CMT_Timings\process.txt");
+                File.Create(@"C:\Users\Josh\Desktop\Josh\Research\CMT_Timings\keypoints.txt");
+            }
+
             FileInfo assembly = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
             mTracker = new CMT();
@@ -92,13 +123,190 @@ namespace CMT_Tracker
             mCaptureTimer.Elapsed += mCaptureTimer_Elapsed;
             //mCaptureTimer.Start();
 
-            overlay.MouseDown += overlay_MouseDown;
+            //overlay.MouseDown += overlay_MouseDown;
+
+            // Start Tracking Code for MatLab Toolkit
+            //isTracking = true;
+            //while(isTracking)
+            //{
+                tracking();
+            //}
+        }
+
+        // This function is to be used for MatLab VOT Toolkit
+        // It is for automatic evaluation purposes
+        // Added by JSS 12/10/2014
+        private void tracking()
+        {
+            if (!isInit)
+            {
+                bool initSuccess = false;
+
+                // Initialize with text files
+                initSuccess = InitializeTracker();
+                
+                if (!initSuccess)
+                {
+                    Console.WriteLine("Unable to initialiaze tracker.");
+                    Console.WriteLine("Exiting program.");
+                    isTracking = false;
+                    outputFile.Close();
+                    Application.Exit();
+                }
+                else
+                {
+                    isInit = true;
+                    //Console.WriteLine("Starting Capture Timer");
+                    mCaptureTimer.Start();
+                }
+            } 
+
+            else
+            {
+                mCaptureTimer.Start();
+            }
+
+        }
+
+        private bool InitializeTracker()
+        {
+            //Console.WriteLine("Initializing Tracker");
+
+            bool ableToInitialize = false;
+
+            //Console.WriteLine("Stop Capture Timer");
+            mCaptureTimer.Stop();
+            mTracker.Reset();
+            mROIMode = true;
+
+            //Console.WriteLine("Initializing Tracker");
+
+            // Open Output File
+            outputFile = new StreamWriter("output.txt");
+
+            // Read images.txt file to get path of starting image
+            StreamReader imageFile = new StreamReader("images.txt");
+            string line;
+
+            if ((line = imageFile.ReadLine()) != null)
+            {
+                // Get source path
+                int pos = line.LastIndexOf('\\');
+                sourcePath = line.Substring(0, pos);
+
+                // Get starting frame number
+                pos = line.LastIndexOf('.');
+                mNextFrame = Convert.ToInt32(line.Substring(pos - 4, 4));
+
+                // FOR DEBUGGING ONLY
+                //mNextFrame = 19;
+
+                ableToInitialize = true;
+            }
+            imageFile.Close();
+
+            // For Testing Purposes on laptop
+            //sourcePath = @"C:\Users\Josh\Desktop\Josh\Research\VOT_Toolkit_Videos\woman";
+            // For Testing purposes on Lab computer
+            //sourcePath = @"C:\vot-toolkit-master\vot-workspace\sequences\ball";
+            sourcePath = @"C:\Users\Josh\Desktop\Josh\Research\HD_Videos\DeckofCards";
+
+            CaptureNextFrame();
+
+            // Read region.txt file to get the initial bounding box
+            StreamReader regionFile = new StreamReader("region.txt");
+
+            if ((line = regionFile.ReadLine()) != null)
+            {
+                string[] values = line.Split(',');
+                float[] x = new float[4];
+                float[] y = new float[4];
+
+                for (int i = 0; i < 8; i++)
+                {
+                    if (i % 2 == 0)
+                    {
+                        x[i / 2] = float.Parse(values[i]);
+                    }
+                    else
+                    {
+                        y[i / 2] = float.Parse(values[i]);
+                    }
+                }
+
+                float maxX = 0;
+                float minX = 4000;
+                float maxY = 0;
+                float minY = 4000;
+                
+                for (int i = 0; i < 4; i++)
+                {
+                    maxX = (x[i] > maxX) ? ((x[i] > 0) ? x[i] : 0) : maxX;
+                    minX = (x[i] < minX) ? ((x[i] > 0) ? x[i] : 0) : minX;
+                    maxY = (y[i] > maxY) ? ((y[i] > 0) ? y[i] : 0) : maxY;
+                    minY = (y[i] < minY) ? ((y[i] > 0) ? y[i] : 0) : minY;
+                }
+
+                maxX = (maxX > trackFrame.Width) ? trackFrame.Width : maxX;
+                minX = (minX < 0) ? 0 : minX;
+                maxY = (maxY > trackFrame.Height) ? trackFrame.Height : maxY;
+                minY = (minY < 0) ? 0 : minY;
+
+                int initWidth = ((maxX - minX) > 0) ? (int)(maxX - minX) : 0;
+                int initHeight = ((maxY - minY) > 0) ? (int)(maxY - minY) : 0;
+
+                initWidth = (initWidth + (int)minX > trackFrame.Width) ? trackFrame.Width - (int)minX : initWidth;
+                initHeight = (initHeight + (int)minY > trackFrame.Height) ? trackFrame.Height - (int)minY : initHeight;
+
+                mDefinedROI = new Rectangle((int)minX, (int)minY, initWidth, initHeight);
+
+                // FOR DEBUGGING ONLY
+                mDefinedROI = new Rectangle(621,463,181,234);
+
+                outputFile.WriteLine("{0},{1},{2},{3}", mDefinedROI.X, mDefinedROI.Y, mDefinedROI.Width, mDefinedROI.Height);
+                
+            }
+
+            if (ableToInitialize)
+            {
+                // Initialize Tracker
+                mTracker.Initialize(trackFrame, mDefinedROI);
+
+                // Draw Initial Frame
+                //trackFrame.Draw(mDefinedROI, new Bgr(255, 0, 0), 2);
+                //for (int i = 0; i < mTracker.ActiveKeypointsF.Count; i++)
+                //{
+                //    trackFrame.Draw(new CircleF(mTracker.ActiveKeypointsF[i], 3), new Bgr(Color.Blue), 1);   
+                //}
+                ////for (int i = 0; i < mTracker.InitialBackgroundKeypoints.Count; i++)
+                ////{
+                ////    trackFrame.Draw(new CircleF(mTracker.InitialBackgroundKeypoints[i].Point, 3), new Bgr(Color.Red), 1);   
+                ////}
+
+                //trackFrame.Draw(new CircleF(mTracker.CenterF, 4), new Bgr(Color.Green), -1);   // Green
+
+                //trackFrame.Save("C:\\Users\\Josh\\Desktop\\init_image.jpg");
+
+                mROIMode = false;
+            }
+
+            return ableToInitialize;
         }
 
         void mCaptureTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            CaptureNextFrame();
-            mCaptureTimer.Start();
+            if (CaptureNextFrame() == 0)
+            {
+                //Console.WriteLine("Stop Capture Timer");
+                mCaptureTimer.Stop();
+                outputFile.Close();
+                Environment.Exit(-1);
+            }
+            else
+            {
+                //Console.WriteLine("Start Capture Timer");
+                mCaptureTimer.Start();
+            }
         }
 
         void overlay_MouseDown(object sender, MouseEventArgs e)
@@ -131,11 +339,12 @@ namespace CMT_Tracker
             }
         }
 
-        private static int mNextFrame = 1;
+        private static int mNextFrame; // = 1;
 
-        private void CaptureNextFrame()
+        private int CaptureNextFrame()
         {
             string nextFrame = String.Format("{0}\\{1}.jpg", sourcePath, mNextFrame++.ToString("00000000"));
+            //Console.WriteLine(nextFrame);
             if (!File.Exists(nextFrame))
             {
                 nextFrame = String.Format("{0}\\{1}.png", sourcePath, mNextFrame++.ToString("00000000"));
@@ -143,34 +352,72 @@ namespace CMT_Tracker
             if (File.Exists(nextFrame))
             {
                 Image<Bgr, Byte> frame = new Image<Bgr, byte>(nextFrame);
+                //frame = frame.Resize(1000, 563, Emgu.CV.CvEnum.INTER.CV_INTER_LINEAR);
+                status.Text = string.Format("{0}", mNextFrame - 1);
                 if (!mROIMode)
                 {
                     Stopwatch sw = new Stopwatch();
+
                     sw.Start();
                     mDefinedROI = mTracker.ProcessFrame(frame, mDefinedROI);
                     sw.Stop();
-                    Console.WriteLine("Frame processed in: {0}", sw.Elapsed);
+                    using (StreamWriter stream = File.AppendText(@"C:\Users\Josh\Desktop\Josh\Research\CMT_Timings\totals.txt"))
+                    {
+                        stream.WriteLine("{0}", sw.ElapsedMilliseconds);
+                    }
+                    //Console.WriteLine("Frame processed in: {0}", sw.Elapsed);
                     if (mTracker.Valid)
                     {
-                        frame.Draw(mDefinedROI, new Bgr(255, 0, 0), 2);
-                        for (int i = 0; i < mTracker.TrackedKeypoints.Count; i++)
+                        if(display)
                         {
-                            frame.Draw(new CircleF(mTracker.ActiveKeypointsF[i], 3), new Bgr(255, 255, 255), 1);
+                            frame.Draw(mDefinedROI, new Bgr(255, 0, 0), 2);
+                            // Draw points that weren't matched to background (for Debugging purposes)
+                            //for (int i = 0; i < mTracker.NonBackgroundPoints.Count; i++)
+                            //{
+                            //    frame.Draw(new CircleF(mTracker.NonBackgroundPoints[i].Point, 2), new Bgr(0, 102, 255), 1);   // Orange
+                            //}
+                            for (int i = 0; i < mTracker.TrackedKeypoints.Count; i++)
+                            {
+                                frame.Draw(new CircleF(mTracker.ActiveKeypointsF[i], 3), new Bgr(255, 255, 255), 1);   // White
+                            }
+                            for (int i = 0; i < mTracker.Inliers.Count; i++)
+                            {
+                                frame.Draw(new CircleF(mTracker.Inliers[i], 3), new Bgr(255, 0, 0), 1);   // Blue
+                            }
+                            for (int i = 0; i < mTracker.Outliers.Count; i++)
+                            {
+                                frame.Draw(new CircleF(mTracker.Outliers[i], 3), new Bgr(0, 0, 255), 1);   // Red
+                            }
+                            frame.Draw(new CircleF(mTracker.CenterF, 4), new Bgr(Color.Green), -1);   // Green
+                            //frame.Save(String.Format(@"C:\Users\Josh\Desktop\Josh\Research\TrackingImages\BackgroundSub\{0}.jpg", (mNextFrame - 1).ToString("00000000")));
                         }
-                        for (int i = 0; i < mTracker.Inliers.Count; i++)
+
+                        if(outputBB)
                         {
-                            frame.Draw(new CircleF(mTracker.Inliers[i], 3), new Bgr(255, 0, 0), 1);
+                            outputFile.WriteLine("{0},{1},{2},{3}", mDefinedROI.X, mDefinedROI.Y, mDefinedROI.Width, mDefinedROI.Height);
                         }
-                        for (int i = 0; i < mTracker.Outliers.Count; i++)
-                        {
-                            frame.Draw(new CircleF(mTracker.Outliers[i], 3), new Bgr(0, 0, 255), 1);
-                        }
-                        frame.Draw(new CircleF(mTracker.CenterF, 4), new Bgr(Color.Green), -1);
                     }
+                    else if (!mTracker.Valid || outputBB)
+                    {
+                        //frame.Save(String.Format(@"C:\Users\Josh\Desktop\Josh\Research\TrackingImages\BackgroundSub\{0}.jpg", (mNextFrame - 1).ToString("00000000")));
+                        outputFile.WriteLine("nan,nan,nan,nan");
+                    }
+
                 }
-                overlay.Image = frame.ToBitmap();
+                if(display)
+                {
+                    overlay.Image = frame.ToBitmap();
+                }
+                
                 if (trackFrame != null) trackFrame.Dispose();
                 trackFrame = frame;
+
+                return 1;
+            }
+            else
+            {
+                // File does not exist
+                return 0;
             }
         }
 

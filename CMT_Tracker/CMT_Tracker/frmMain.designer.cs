@@ -41,6 +41,7 @@
             this.overlay.Location = new System.Drawing.Point(13, 13);
             this.overlay.Name = "overlay";
             this.overlay.Size = new System.Drawing.Size(640, 480);
+            this.overlay.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.overlay.TabIndex = 0;
             this.overlay.TabStop = false;
             // 

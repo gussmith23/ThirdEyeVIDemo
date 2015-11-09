@@ -17,6 +17,7 @@ namespace CMT_Tracker
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new frmTrackMain());
+            Application.Exit();
         }
     }
 }

@@ -101,14 +101,6 @@
       <Project>{0247725d-fd04-4f2b-8cc5-f4e71705e1da}</Project>
       <Name>ClientServer</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\CMT_Tracker\Clustering\Clustering.csproj">
-      <Project>{f5c7f496-de23-4ecd-916c-5be8b4bdff33}</Project>
-      <Name>Clustering</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\CMT_Tracker\CMT_Tracker\CMT_Tracker.csproj">
-      <Project>{041772d0-10c9-4f02-86d0-e2e985f48d38}</Project>
-      <Name>CMT_Tracker</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

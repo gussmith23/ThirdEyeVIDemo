@@ -1,6 +1,7 @@
 ﻿using Emgu.CV;
 using Emgu.CV.Structure;
 using Emgu.CV.Features2D;
+using Emgu.CV.Util;
 
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Diagnostics;
+using Clustering;
 
 namespace CMT_Tracker
 {
@@ -17,41 +20,56 @@ namespace CMT_Tracker
     /// <see cref="http://www.gnebehay.com/cmt/"/>
     /// <see cref="Nebehay, Georg and Pflugfelder, Roman. Consensus-based Matching and Tracking of Keypoints for Object Tracking. Winter Conference on Applications of Computer Vision 2014."/>
     /// </summary>
-    class CMT
+    class CMT_SURF
     {
 
-        #region Private Members 
-        private bool mSURFEnabled = false;
-        private bool mFullSURFEnabled = false;
-
-        private int mDeltaX;
-        private int mDeltaY;
-        private float mDeltaPercent = 0.2F;
-
-        private Brisk mFeatureDetector;
+        #region Private Members
+        //private bool mSURFEnabled = true;
+       
         private SURFDetector mSURFDetector;
-        private BruteForceMatcher<byte> mObjectMatcher;
-        private BruteForceMatcher<byte> mGlobalMatcher;
+
         private BruteForceMatcher<float> mSurfObjectMatcher;
         private BruteForceMatcher<float> mSurfGlobalMatcher;
-        private BruteForceMatcher<float> mAdaptiveSurfObjectMatcher;
-        private BruteForceMatcher<float> mAdaptiveSurfGlobalMatcher;
+        private BruteForceMatcher<float> mAdaptiveSurfBackgroundMatcher;
 
         private PointF mCenterTopLeft;
         private PointF mCenterTopRight;
         private PointF mCenterBottomRight;
         private PointF mCenterBottomLeft;
+
+        private int frame_count = 1;
+
+        private Stopwatch sw1 = new Stopwatch();    // SURF Keypoints
+        private Stopwatch sw2 = new Stopwatch();    // SURF Descriptors
+        private Stopwatch sw3 = new Stopwatch();    // Background Matcher
+        private Stopwatch sw4 = new Stopwatch();    // Background Match Logic
+        private Stopwatch sw5 = new Stopwatch();    // Object Matcher
+        private Stopwatch sw6 = new Stopwatch();    // Object Match Logic
+        private Stopwatch sw7 = new Stopwatch();
+        private Stopwatch sw8 = new Stopwatch();
+        private Stopwatch sw9 = new Stopwatch();
+        private Stopwatch sw10 = new Stopwatch();    
+
+        private int total_num_keypoints;
+        private int num_object_model_keypoints;
+        private int num_bgnd_model_keypoints;
+        private int num_poss_object_keypoints;
+
         #endregion
 
         #region Private Members of Public Properties
         private float mOpticalFlowErrorThreshold = 20.0F;
         private int mClusterOutlierThreshold = 20;
         private int mMatchingConfidenceScaleFactor = 512;
-        private float mMatchingConfidenceThreshold = 0.7F;  // Default is .7
-        private float mMatchingConfidenceRatio = 0.8F;        // Default is .8
 
         private float mSURFMatchingConfidenceThreshold = 0.7F;  // Default is .7
         private float mSURFMatchingConfidenceRatio = 0.8F;        // Default is .8
+
+        //private float mWeightedMaxDistance;
+        private float mWeightedDistanceConfThreshold;
+        private float mVarianceDistance;
+        private float mMinVarianceDistance = 35.0F;
+        private float mMeanDistance; 
 
         private bool bEstimateScale;
         private bool bEstimateRotation;
@@ -63,50 +81,77 @@ namespace CMT_Tracker
 
         private RectangleF mBoundingBox;
         private PointF mCenter;
+        private PointF mPrevCenter;
 
         // All keypoints in the initial frame
-        private List<PointF> mAllKeypoints;
-        private Matrix<byte> mAllKeypointFeatures;
-        private Matrix<float> mSurfAllKeypointFeatures;
-        private List<int> mAllKeypointClasses;
+        private List<PointF> mAllInitialKeypoints;
+        private Matrix<float> mAllInitialFeatures;
+        private List<int> mAllInitialKeypointClasses;
         private int mInitialKeypointCount;
 
         // Currently active keypoints to be tracked in the frame
         private List<PointF> mActiveKeypoints;
-        private Matrix<byte> mActiveKeypointFeatures;
-        private Matrix<float> mSurfActiveKeypointFeatures;
+        private Matrix<float> mActiveFeatures;
         private List<int> mActiveKeypointClasses;
+
+        // Model for background keypoints and features
+        private List<MKeyPoint> mInitialBackgroundKeypoints;
+        private Matrix<float> mInitialBackgroundFeatures;
+        private List<int> mInitialBackgroundKeypointClasses;
 
         // Model object keypoints from the initial frame
         private List<PointF> mSelectedKeypoints;
-        private Matrix<byte> mSelectedKeypointFeatures;
+        private List<MKeyPoint> mSelectedMKeypoints;
         private List<int> mSelectedKeypointClasses;
+        private Matrix<float> mSelectedFeatures;
         private Matrix<float> mSelectedKeypointDistances;
         private Matrix<float> mSelectedKeypointAngles;
         private List<PointF> mSprings;
 
-        // Adaptive model of all keypoints in the frame
-        private List<PointF> mAdaptiveAllKeypoints;
-        private Matrix<byte> mAdaptiveAllKeypointFeatures;
-        private Matrix<float> mAdaptiveSurfAllKeypointFeatures;
-        private List<int> mAdaptiveAllKeypointClasses;
-        private int mAdaptiveInitialKeypointCount;
+        // Adaptive model of background keypoints in the frame
+        private List<MKeyPoint> mAdaptiveBackgroundKeypoints;
+        private Matrix<float> mAdaptiveBackgroundFeatures;
 
-        // Adaptive object keypoints from the initial frame
-        private List<PointF> mAdaptiveSelectedKeypoints;
-        private Matrix<byte> mAdaptiveSelectedKeypointFeatures;
-        private List<int> mAdaptiveSelectedKeypointClasses;
-        private Matrix<float> mAdaptiveSelectedKeypointDistances;
-        private Matrix<float> mAdaptiveSelectedKeypointAngles;
-        private List<PointF> mAdaptiveSprings;
+        private List<MKeyPoint> mAdaptiveBackgroundKeypointsPrevious;
+        private Matrix<float> mAdaptiveBackgroundFeaturesPrevious;
 
-        private bool mAdaptiveModelValid;
+        private MKeyPoint[] mCurrentFrameKeypoints;
+        private Matrix<float> mCurrentFrameFeatures;
 
         private List<PointF> mTrackedKeypoints;
         private List<PointF> mInliers;
         private List<PointF> mOutliers;
 
+        private List<MKeyPoint> mPossibleObjectKeypoints;
+        private Matrix<float> mPossibleObjectFeatures;
+
+        private List<MKeyPoint> mMatchedBackgroundKeypoints;
+        private List<Matrix<float>> mMatchedBackgroundFeatures;
+        private Matrix<int> mMatchedBackgroundMatches;
+
+        private List<MKeyPoint> mHomographyBackgroundKeypoints;
+        private Matrix<float> mHomographyBackgroundFeatures;
+
+        private List<PointF> mUpdatedKeypoints;
+        private List<MKeyPoint> mUpdatedMKeypoints;
+        private List<int> mUpdatedKeypointClasses;
+        private List<Matrix<float>> mUpdatedKeypointFeatures;
+        private Matrix<float> mUpdatedFeaturesMatrix;
+        private List<float> mUpdatedConfidences;
+        private List<PointF> mUpdatedKeypointMatchesPoints;
+        private List<Matrix<int>> mUpdatedKeypointMatches;
+        private List<Matrix<float>> mUpdatedDistances;
+
+        private bool mAdaptiveBackgroundModel;
+        private bool mIsCenterNaN;
+        private bool mStdDevCalc = false;
+        
         private Image<Gray, Byte> mPreviousFrame;
+        private Image<Gray, Byte> mOriginalImage;
+        private Image<Gray, Byte> mCurrentFrame;
+
+        //private List<RectangleF> mGroundTruthBBs;
+
         #endregion
 
         #region Public Properties
@@ -119,16 +164,6 @@ namespace CMT_Tracker
         /// Minimum distance between cluster centroids during center-estimate clustering.
         /// </summary>
         public int ClusterOutlierThreshold { get { return mClusterOutlierThreshold; } set { mClusterOutlierThreshold = value; } }
-
-        /// <summary>
-        /// Minimum confidence required to be considered a sufficiently good match.
-        /// </summary>
-        public float MatchingConfidenceThreshold { get { return mMatchingConfidenceThreshold; } set { mMatchingConfidenceThreshold = value; } }
-        
-        /// <summary>
-        /// Minimum confidence ratio required between top two best matches to be considered a sufficiently good match.
-        /// </summary>
-        public float MatchingConfidenceRatio { get { return mMatchingConfidenceRatio; } set { mMatchingConfidenceRatio = value; } }
 
         /// <summary>
         /// Maximum error threshold allowed in reverse-computed optical flow to be considered a stable tracked point.
@@ -209,6 +244,11 @@ namespace CMT_Tracker
         /// </summary>
         public List<PointF> Outliers { get { return (mOutliers == null ? new List<PointF>() : mOutliers); } }
 
+        public List<MKeyPoint> NonBackgroundPoints { get { return (mPossibleObjectKeypoints == null ? new List<MKeyPoint>() : mPossibleObjectKeypoints); } }
+
+        public List<MKeyPoint> InitialBackgroundKeypoints { get { return (mInitialBackgroundKeypoints == null ? new List<MKeyPoint>() : mInitialBackgroundKeypoints); } }
+
+        //public List<RectangleF> GroundTruthBBs { get { return (mGroundTruthBBs == null ? new List<RectangleF>() : mGroundTruthBBs); } set { mGroundTruthBBs = value; } }
         #endregion
 
         #region -- Optical Flow -- Delegates
@@ -281,7 +321,7 @@ namespace CMT_Tracker
                 opticalFlowLevel, opticalFlowCriteria,
                 out bckPts, out bckStatus, out bckError);
         }
-        
+
         /// <summary>
         /// Computes optical flow error, given the original points and reverse-computed points.
         /// </summary>
@@ -332,8 +372,8 @@ namespace CMT_Tracker
                 ExtractKeypoints(ref frame, out all_keypoints);
             }
         }
-        
-        
+
+
         /// <summary>
         /// Extracts keypoints from the given frame, using the BRISK keypoint extraction routine.
         /// </summary>
@@ -349,7 +389,7 @@ namespace CMT_Tracker
         private void ExtractSURFKeypoints(ref Image<Gray, Byte> frame, out MKeyPoint[] all_keypoints)
         {
             //Console.WriteLine("Internal SURF Keypoint Detector");
-            all_keypoints = mSURFDetector.DetectKeyPoints(frame, null);  
+            all_keypoints = mSURFDetector.DetectKeyPoints(frame, null);
         }
 
 
@@ -416,7 +456,7 @@ namespace CMT_Tracker
         /// <summary>
         /// Default public constructor. Initializes members and properties to the defaults.
         /// </summary>
-        public CMT()
+        public CMT_SURF()
         {
             ClassInit();
         }
@@ -428,15 +468,16 @@ namespace CMT_Tracker
         {
             mMatchingConfidenceScaleFactor = 512;
             mClusterOutlierThreshold = 20;
-            mMatchingConfidenceThreshold = 0.7F;
-            mMatchingConfidenceRatio = 0.8F;
-            mSURFMatchingConfidenceThreshold = 0.9992F;   // Default is .7
-            mSURFMatchingConfidenceRatio = 0.85F;       // Default is .8
+            
+            mSURFMatchingConfidenceThreshold = 0.999F;   // for adapted l1 = .9 // Default is .7
+            mSURFMatchingConfidenceRatio = 0.93F;       // for adapted l1 = .8  // Default is .8
             mOpticalFlowErrorThreshold = 20.0F;
+            
+            mWeightedDistanceConfThreshold = 0.9F;     // for adapted l2 = .9
 
             bEstimateRotation = false;
             bEstimateScale = true;
-            mAdaptiveModelValid = false;
+            mAdaptiveBackgroundModel = false;
 
             Reset();
         }
@@ -446,16 +487,11 @@ namespace CMT_Tracker
         /// </summary>
         public void Reset()
         {
-            mFeatureDetector = new Brisk(30, 3, 1.0f);
-            mSURFDetector = new SURFDetector(500, false);
-            mObjectMatcher = new BruteForceMatcher<byte>(DistanceType.Hamming);
-            mGlobalMatcher = new BruteForceMatcher<byte>(DistanceType.Hamming);
-
+            
+            mSURFDetector = new SURFDetector(400, false);
             mSurfGlobalMatcher = new BruteForceMatcher<float>(DistanceType.L2);
             mSurfObjectMatcher = new BruteForceMatcher<float>(DistanceType.L2);
-
-            mAdaptiveSurfGlobalMatcher = new BruteForceMatcher<float>(DistanceType.L2);
-            mAdaptiveSurfObjectMatcher = new BruteForceMatcher<float>(DistanceType.L2);
+            mAdaptiveSurfBackgroundMatcher = new BruteForceMatcher<float>(DistanceType.L2);
 
             mCenterTopLeft = new PointF();
             mCenterTopRight = new PointF();
@@ -471,40 +507,51 @@ namespace CMT_Tracker
             mBoundingBox = new RectangleF();
             mCenter = new PointF();
 
-            mAllKeypoints = new List<PointF>();
-            mAllKeypointFeatures = null;
-            mSurfAllKeypointFeatures = null;
-            mAllKeypointClasses = new List<int>();
+            mAllInitialKeypoints = new List<PointF>();
+            mAllInitialFeatures = null;
+            mAllInitialKeypointClasses = new List<int>();
             mInitialKeypointCount = 0;
 
-            mAdaptiveAllKeypoints = new List<PointF>();
-            mAdaptiveAllKeypointFeatures = null;
-            mAdaptiveSurfAllKeypointFeatures = null;
-            mAdaptiveAllKeypointClasses = new List<int>();
-            mAdaptiveInitialKeypointCount = 0;
+            mAdaptiveBackgroundKeypoints = new List<MKeyPoint>();
+            mAdaptiveBackgroundFeatures = null;
+
+            mAdaptiveBackgroundKeypointsPrevious = new List<MKeyPoint>();
+            mAdaptiveBackgroundFeaturesPrevious = null;
 
             mActiveKeypoints = new List<PointF>();
-            mActiveKeypointFeatures = null;
-            mSurfActiveKeypointFeatures = null;
+            mActiveFeatures = null;
             mActiveKeypointClasses = new List<int>();
 
             mSelectedKeypoints = new List<PointF>();
-            mSelectedKeypointFeatures = null;
+            mSelectedMKeypoints = new List<MKeyPoint>();
             mSelectedKeypointClasses = new List<int>();
             mSelectedKeypointDistances = null;
             mSelectedKeypointAngles = null;
             mSprings = new List<PointF>();
 
-            mAdaptiveSelectedKeypoints = new List<PointF>();
-            mAdaptiveSelectedKeypointFeatures = null;
-            mAdaptiveSelectedKeypointClasses = new List<int>();
-            mAdaptiveSelectedKeypointDistances = null;
-            mAdaptiveSelectedKeypointAngles = null;
-            mAdaptiveSprings = new List<PointF>();
-
             mTrackedKeypoints = new List<PointF>();
             mInliers = new List<PointF>();
             mOutliers = new List<PointF>();
+            
+            mPossibleObjectKeypoints = new List<MKeyPoint>();
+            mPossibleObjectFeatures = null;
+
+            mMatchedBackgroundKeypoints = new List<MKeyPoint>();
+            mMatchedBackgroundFeatures = new List<Matrix<float>>();
+            mMatchedBackgroundMatches = null;
+
+            mHomographyBackgroundKeypoints = new List<MKeyPoint>();
+            mHomographyBackgroundFeatures = null;
+
+            mUpdatedKeypoints = new List<PointF>();
+            mUpdatedMKeypoints = new List<MKeyPoint>();
+            mUpdatedKeypointClasses = new List<int>();
+            mUpdatedKeypointFeatures = new List<Matrix<float>>();
+            mUpdatedFeaturesMatrix = null;
+            mUpdatedConfidences = new List<float>();
+            mUpdatedKeypointMatchesPoints = new List<PointF>();
+            mUpdatedKeypointMatches = new List<Matrix<int>>();
+            mUpdatedDistances = new List<Matrix<float>>();
 
             if (mPreviousFrame != null) { mPreviousFrame.Dispose(); }
             mPreviousFrame = null;
@@ -538,36 +585,23 @@ namespace CMT_Tracker
         private void Initialize(Image<Gray, Byte> frame, RectangleF ROI)
         {
             MKeyPoint[] all_keypoints;
-            Matrix<byte> all_features;
             Matrix<float> surf_all_features;
             Matrix<int> all_classes;
-            Matrix<byte> object_features;
             Matrix<float> surf_object_features;
             Matrix<int> object_classes;
-            Matrix<byte> background_features;
             Matrix<float> surf_background_features;
             Matrix<int> background_classes;
 
-            if(ROI != null)
-            {
-                mDeltaX = (int)(mDeltaPercent * ROI.Width);
-                mDeltaY = (int)(mDeltaPercent * ROI.Height);
-            }
+            mOriginalImage = frame.Clone();
 
-            if (mSURFEnabled || mFullSURFEnabled)
-            {
-                // Get Keypoints in the whole image
-                ExtractSURFKeypoints(ref frame, out all_keypoints);
-            }
-            else
-            {
-                // Get Keypoints in the whole image
-                ExtractKeypointsFromImage(ref frame, mFeatureDetector, out all_keypoints);
-            }
+            //mWeightedMaxDistance = (float)(Math.Sqrt(Math.Pow(frame.Height, 2.0) + Math.Pow(frame.Width, 2.0)));
+    
+            // Get Keypoints in the whole image
+            ExtractSURFKeypoints(ref frame, out all_keypoints);
 
             List<MKeyPoint> object_keypoints = new List<MKeyPoint>();
             List<MKeyPoint> background_keypoints = new List<MKeyPoint>();
-            for(int kpi = 0; kpi < all_keypoints.Length; kpi++)
+            for (int kpi = 0; kpi < all_keypoints.Length; kpi++)
             {
                 MKeyPoint kp = all_keypoints[kpi];
                 if (ROI.Contains(kp.Point))
@@ -586,8 +620,10 @@ namespace CMT_Tracker
             int NumKeypoints = all_keypoints.Length;
             int NumObjectKeypoints = object_keypoints.Count;
             int NumBackgroundKeypoints = background_keypoints.Count;
+            num_bgnd_model_keypoints = NumBackgroundKeypoints;
+            num_object_model_keypoints = NumObjectKeypoints;
 
-            if(NumObjectKeypoints == 0)
+            if (NumObjectKeypoints == 0)
             {
                 bValid = false;
             }
@@ -596,65 +632,46 @@ namespace CMT_Tracker
             {
                 // Getting to here means there is at least one object keypoint in the ROI so the tracker can be initialized
                 // The following code is split into two parts based on the keypoint and descriptor extraction method
+               
+                // Collect information about object keypoints
+                ExtractSURFDescriptors(ref frame, object_keypoints.ToArray(), out surf_object_features);
 
-                // Tracker using SURF Keypoints and Descriptors
-                if(mSURFEnabled || mFullSURFEnabled)
+                object_classes = new Matrix<int>(1, NumObjectKeypoints);
+                for (int i = 0; i < NumObjectKeypoints; i++) { object_classes[0, i] = i + 1; }
+
+                if (NumBackgroundKeypoints > 0)
                 {
-                    // Collect information about object keypoints
-                    ExtractSURFDescriptors(ref frame, object_keypoints.ToArray(), out surf_object_features);
+                    // Collect information about background keypoints
+                    ExtractSURFDescriptors(ref frame, background_keypoints.ToArray(), out surf_background_features);
 
-                    object_classes = new Matrix<int>(1, NumObjectKeypoints);
-                    for (int i = 0; i < NumObjectKeypoints; i++) { object_classes[0, i] = i + 1; }
-                    
-                    if (NumBackgroundKeypoints > 0)
+                    background_classes = new Matrix<int>(1, NumBackgroundKeypoints);
+                    //for (int i = 0; i < NumBackgroundKeypoints; i++) { background_classes[0, i] = i + 1; }
+
+                    mInitialBackgroundKeypoints = background_keypoints;
+                    mInitialBackgroundFeatures = surf_background_features;
+
+                    mAdaptiveBackgroundKeypointsPrevious = background_keypoints;
+                    mAdaptiveBackgroundFeaturesPrevious = surf_background_features;
+
+                    mInitialBackgroundKeypointClasses = new List<int>();
+
+                    for (int ac = 0; ac < background_classes.Cols; ac++)
                     {
-                        // Collect information about background keypoints
-                        ExtractSURFDescriptors(ref frame, background_keypoints.ToArray(), out surf_background_features);
-
-                        background_classes = new Matrix<int>(1, NumBackgroundKeypoints);
-
-                        // Stack the features and classes
-                        surf_all_features = surf_background_features.ConcateVertical(surf_object_features);
-                        all_classes = background_classes.ConcateHorizontal(object_classes);
-                    }
-                    else
-                    {
-                        surf_all_features = surf_object_features;
-                        all_classes = object_classes;
+                        mInitialBackgroundKeypointClasses.Add(background_classes[0, ac]);
                     }
 
-                    mSurfAllKeypointFeatures = surf_all_features;
-                    mSurfActiveKeypointFeatures = surf_object_features;
+                    // Stack the features and classes
+                    surf_all_features = surf_background_features.ConcateVertical(surf_object_features);
+                    all_classes = background_classes.ConcateHorizontal(object_classes);
                 }
-                // Tracker using BRISK (or some other) Keypoints and Descriptors
                 else
                 {
-                    // Collect information about object keypoints
-                    ExtractDescriptorsFromKeypoints(ref frame, mFeatureDetector, object_keypoints.ToArray(), out object_features);
-
-                    object_classes = new Matrix<int>(1, NumObjectKeypoints);
-                    for (int i = 0; i < NumObjectKeypoints; i++) { object_classes[0, i] = i + 1; }
-                    
-                    if (NumBackgroundKeypoints > 0)
-                    {
-                        // Collect information about background keypoints
-                        ExtractDescriptorsFromKeypoints(ref frame, mFeatureDetector, background_keypoints.ToArray(), out background_features);
-
-                        background_classes = new Matrix<int>(1, NumBackgroundKeypoints);
-                        
-                        // Stack the features and classes
-                        all_features = background_features.ConcateVertical(object_features);
-                        all_classes = background_classes.ConcateHorizontal(object_classes);
-                    }
-                    else
-                    {
-                        all_features = object_features;
-                        all_classes = object_classes;
-                    }
-
-                    mAllKeypointFeatures = all_features;
-                    mActiveKeypointFeatures = object_features;
+                    surf_all_features = surf_object_features;
+                    all_classes = object_classes;
                 }
+
+                mAllInitialFeatures = surf_all_features;
+                mActiveFeatures = surf_object_features;
 
                 // Get distances between object keypoints
                 Matrix<float> pdists = new Matrix<float>(NumObjectKeypoints, NumObjectKeypoints);
@@ -691,13 +708,12 @@ namespace CMT_Tracker
                 mPreviousFrame = frame.Copy();
 
                 // Set "All" and "Active" Keypoint lists
-                mAllKeypoints = new List<PointF>();
-                //mAllKeypointFeatures = all_features;
-                mAllKeypointClasses = new List<int>();
+                mAllInitialKeypoints = new List<PointF>();
+                mAllInitialKeypointClasses = new List<int>();
 
                 mActiveKeypoints = new List<PointF>();
-                //mActiveKeypointFeatures = object_features;
                 mActiveKeypointClasses = new List<int>();
+
                 // All and Active Keypoints
                 for (int kpi = 0; kpi < all_keypoints.Length; kpi++)
                 {
@@ -705,12 +721,13 @@ namespace CMT_Tracker
                     if (ROI.Contains(kp.Point))
                     {
                         mActiveKeypoints.Add(kp.Point);
+                        mSelectedMKeypoints.Add(kp);
                     }
-                    mAllKeypoints.Add(kp.Point);
+                    mAllInitialKeypoints.Add(kp.Point);
                 }
 
                 mSelectedKeypoints = mActiveKeypoints;
-                mSelectedKeypointFeatures = mActiveKeypointFeatures;
+                mSelectedFeatures = mActiveFeatures;
                 mSelectedKeypointClasses = mActiveKeypointClasses;
 
                 // Active Keypoint classes
@@ -721,7 +738,7 @@ namespace CMT_Tracker
                 // All Keypoint classes
                 for (int ac = 0; ac < all_classes.Cols; ac++)
                 {
-                    mAllKeypointClasses.Add(all_classes[0, ac]);
+                    mAllInitialKeypointClasses.Add(all_classes[0, ac]);
                 }
 
                 // Set initial keypoint count
@@ -736,12 +753,12 @@ namespace CMT_Tracker
                 mCenterTopRight = new PointF(ROI.Right - mCenter.X, ROI.Top - mCenter.Y);
                 mCenterBottomRight = new PointF(ROI.Right - mCenter.X, ROI.Bottom - mCenter.Y);
                 mCenterBottomLeft = new PointF(ROI.Left - mCenter.X, ROI.Bottom - mCenter.Y);
-                
+
                 // Calculate the "springs" of each keypoint
                 mSprings = new List<PointF>();
                 for (int k = 0; k < NumObjectKeypoints; k++)
                 {
-                    mSprings.Add(new PointF(object_keypoints[k].Point.X - mCenter.X, 
+                    mSprings.Add(new PointF(object_keypoints[k].Point.X - mCenter.X,
                                             object_keypoints[k].Point.Y - mCenter.Y));
                 }
 
@@ -749,27 +766,15 @@ namespace CMT_Tracker
                 mSelectedKeypointDistances = pdists;
                 mSelectedKeypointAngles = angles;
 
-                if (mSURFEnabled || mFullSURFEnabled)
-                {
-                    // Initialize the matcher
-                    mSurfGlobalMatcher = new BruteForceMatcher<float>(DistanceType.L2);
-                    mSurfGlobalMatcher.Add(mSurfAllKeypointFeatures);
+                // Initialize the matcher
+                mSurfGlobalMatcher = new BruteForceMatcher<float>(DistanceType.L2);
+                mSurfGlobalMatcher.Add(mAllInitialFeatures);
 
-                    mSurfObjectMatcher = new BruteForceMatcher<float>(DistanceType.L2);
-                    mSurfObjectMatcher.Add(mSurfActiveKeypointFeatures);
+                mSurfObjectMatcher = new BruteForceMatcher<float>(DistanceType.L2);
+                mSurfObjectMatcher.Add(mActiveFeatures);
 
-                    mAdaptiveSurfObjectMatcher = new BruteForceMatcher<float>(DistanceType.L2);
-                    // Will add features when it is needed
-                }
-                else
-                {
-                    // Initialize the matcher
-                    mGlobalMatcher = new BruteForceMatcher<byte>(DistanceType.Hamming);
-                    mGlobalMatcher.Add(mAllKeypointFeatures);
-
-                    mObjectMatcher = new BruteForceMatcher<byte>(DistanceType.Hamming);
-                    mObjectMatcher.Add(mSelectedKeypointFeatures);
-                }
+                mAdaptiveSurfBackgroundMatcher = new BruteForceMatcher<float>(DistanceType.L2);
+                mAdaptiveSurfBackgroundMatcher.Add(mInitialBackgroundFeatures);
 
                 // Set the 'Initialized' Flag
                 bInitialized = true;
@@ -777,6 +782,8 @@ namespace CMT_Tracker
                 // Set the bounding box
                 mBoundingBox = new Rectangle((int)ROI.Left, (int)ROI.Top, (int)ROI.Width, (int)ROI.Height);
                 bValid = true;
+
+                mVarianceDistance = VarianceDistance(mCenter, ROI);
                 #endregion
             }
         }
@@ -825,7 +832,7 @@ namespace CMT_Tracker
             keypoints_tracked = outPts.ToArray();
             keypoint_classes = outClasses.ToArray();
         }
-        
+
         /// <summary>
         /// Estimate scale, rotation, and object center of tracked object based on tracked keypoints.
         /// </summary>
@@ -840,7 +847,7 @@ namespace CMT_Tracker
             centerPt = new PointF(float.NaN, float.NaN);
             sc_est = float.NaN;
             rot_est = float.NaN;
-            
+            sw7.Reset();
             int numKP = tracked_keypoints.Length;
             if (numKP > 1)
             {
@@ -849,7 +856,9 @@ namespace CMT_Tracker
 
                 EstimateScaleAndRotation(tracked_keypoints, tracked_classes, ref sc_est, ref rot_est);
 
+                sw7.Start();
                 centerPt = EstimateCenter(ref tracked_keypoints, ref tracked_classes, sc_est, rot_est);
+                sw7.Stop();
             }
             mTrackedKeypoints = new List<PointF>();
             mTrackedKeypoints.AddRange(tracked_keypoints);
@@ -963,7 +972,7 @@ namespace CMT_Tracker
         /// <param name="sc_est">The new estimate of the region scale.</param>
         /// <param name="rot_est">The new estimate of the region rotation.</param>
         /// <returns>The new estimate of the region center.</returns>
-        private PointF EstimateCenter(ref PointF[] tracked_keypoints, ref int[] tracked_classes, 
+        private PointF EstimateCenter(ref PointF[] tracked_keypoints, ref int[] tracked_classes,
                                              float sc_est, float rot_est)
         {
             int numKP = tracked_keypoints.Length;
@@ -990,11 +999,13 @@ namespace CMT_Tracker
             mInliers = new List<PointF>();
             mOutliers = new List<PointF>();
             List<int> inlier_classes = new List<int>();
-            for(int c = 0; c < inliers.Length;c++)
+            PointF[] votesArray = votes.ToArray();
+
+            for (int c = 0; c < inliers.Length; c++)
             {
                 if (inliers[c])
                 {
-                    PointF v = votes[c];
+                    PointF v = votesArray[c];
                     centerX += v.X;
                     centerY += v.Y;
                     inlier_count++;
@@ -1057,37 +1068,8 @@ namespace CMT_Tracker
             PointF newCenter = new PointF(centerX / inlier_count, centerY / inlier_count);
             return newCenter;
         }
-
-        /// <summary>
-        /// Cluster keypoint center estimates to find the most likely candidate.
-        /// </summary>
-        /// <param name="center_votes">The array of center point estimates, based on object model and new keypoint locations.</param>
-        /// <param name="center_classes">The array of classes corresponding to the keypoints.</param>
-        //private void ClusterCenterVotes(ref PointF[] center_votes, ref int[] center_classes)
-        //{
-        //    List<PointF> points = new List<PointF>();
-        //    List<int> classes = new List<int>();
-        //    points.AddRange(center_votes);
-        //    classes.AddRange(center_classes);
-
-        //    bool[] inliers = Clustering.Clusterizer.GetClusterInliers(points, classes, mBoundingBox.Width / 2);
-
-        //    List<PointF> inlier_points = new List<PointF>();
-        //    List<int> inlier_classes = new List<int>();
-        //    for (int c = 0; c < inliers.Length; c++)
-        //    {
-        //        if (inliers[c])
-        //        {
-        //            inlier_points.Add(center_votes[c]);
-        //            inlier_classes.Add(center_classes[c]);
-        //        }
-        //    }
-        //    center_votes = inlier_points.ToArray();
-        //    center_classes = inlier_classes.ToArray();
-        //}
-        
         #endregion
-        
+
         #region ProcessFrame
         /// <summary>
         /// Processes the current frame to track an object which was last detected in the given ROI.
@@ -1117,128 +1099,401 @@ namespace CMT_Tracker
         //<returns>The estimate of the new ROI off the object to be tracked.</returns>
         private Rectangle ProcessFrame(Image<Gray, Byte> frame, RectangleF ROI)
         {
-            List<PointF> updatedKeypoints = new List<PointF>();
-            List<int> updatedKeypointClasses = new List<int>();
-            List<Matrix<byte>> updatedKeypointFeatures = new List<Matrix<byte>>();
-            List<Matrix<float>> updatedSurfKeypointFeatures = new List<Matrix<float>>();
-            List<float> updatedConfidences = new List<float>();
-
-            // For new SURF optical flow method
-            List<PointF> updatedObjectKeypoints = new List<PointF>();
-            List<int> updatedObjectKeypointClasses = new List<int>();
-            List<Matrix<float>> updatedObjectSurfKeypointFeatures = new List<Matrix<float>>();
-            List<float> updatedObjectConfidences = new List<float>();
-
+            //frame = frame.Resize(1000, 563, Emgu.CV.CvEnum.INTER.CV_INTER_LINEAR);
+            //frame.Save(@"C:\Users\Josh\Desktop\Josh\Research\GrayImages\tide.png");
+            // ***************************************************************************************************************************
+            // ((( Updated Code ...
+            // ***************************************************************************************************************************
             PointF centerEstimate = mCenter;
             float scaleEstimate = mScaleEstimate;
             float rotationEstimate = mRotationEstimate;
+
+            mCurrentFrame = frame;
 
             if (!Initialized)
             {
                 Initialize(frame, ROI);
                 return RectFToRect(mBoundingBox);
             }
-            
+
             PointF[] tracked_keypoints;
             int[] tracked_classes;
 
-            Track(mPreviousFrame, frame, mActiveKeypoints.ToArray(), mActiveKeypointClasses.ToArray(),
-                    mOpticalFlowErrorThreshold, out tracked_keypoints, out tracked_classes);
-
-
-            Estimate(ref tracked_keypoints, ref tracked_classes,
-                        ref centerEstimate, ref scaleEstimate, ref rotationEstimate);
-            bool isCenterNaN = float.IsNaN(centerEstimate.X) || float.IsNaN(centerEstimate.Y);
-
-
-
-            // Process frame for new keypoints
-            MKeyPoint[] keypoint_vector;
-            Matrix<byte> keypoint_features = null;
-            Matrix<float> surf_keypoint_features = null;
-
-            if (mSURFEnabled)
+            if(mSelectedKeypoints != null & mSelectedKeypoints.Count > 0)
             {
+                Track(mPreviousFrame, frame, mActiveKeypoints.ToArray(), mActiveKeypointClasses.ToArray(), mOpticalFlowErrorThreshold, out tracked_keypoints, out tracked_classes);
+                Estimate(ref tracked_keypoints, ref tracked_classes, ref centerEstimate, ref scaleEstimate, ref rotationEstimate);
+                mIsCenterNaN = float.IsNaN(centerEstimate.X) || float.IsNaN(centerEstimate.Y);
+
+                mCenter = centerEstimate;
+                mScaleEstimate = scaleEstimate;
+                mRotationEstimate = rotationEstimate;
+
+                ClearVariables();
+
+                // Process frame for new keypoints
+                MKeyPoint[] keypoint_vector;
+                Matrix<float> keypoint_features;
+
+                //sw1.Restart();
                 ExtractSURFKeypoints(ref frame, out keypoint_vector);
-                ExtractSURFDescriptors(ref frame, keypoint_vector, out surf_keypoint_features);
-            }
-            else
-            {
-                ExtractKeypointsFromImage(ref frame, mFeatureDetector, out keypoint_vector);
-                ExtractDescriptorsFromKeypoints(ref frame, mFeatureDetector, keypoint_vector, out keypoint_features);
-            }
+                //sw1.Stop();
 
-            int k = 2;
-            Matrix<int> matches_all = new Matrix<int>((mSURFEnabled) ? surf_keypoint_features.Rows : keypoint_features.Rows, k);
-            Matrix<float> matches_all_distances = new Matrix<float>((mSURFEnabled) ? surf_keypoint_features.Rows : keypoint_features.Rows, k);
-            Matrix<int> selected_matches = null;
-            Matrix<float> selected_matches_distances = null;
+                total_num_keypoints = keypoint_vector.Length;
 
-            Matrix<int> adaptive_matches_all = new Matrix<int>((mSURFEnabled) ? surf_keypoint_features.Rows : keypoint_features.Rows, k);
-            Matrix<float> adaptive_matches_all_distances = new Matrix<float>((mSURFEnabled) ? surf_keypoint_features.Rows : keypoint_features.Rows, k);
-            Matrix<int> adaptive_selected_matches = null;
-            Matrix<float> adaptive_selected_matches_distances = null;
+                //sw2.Restart();
+                ExtractSURFDescriptors(ref frame, keypoint_vector, out keypoint_features);
+                //sw2.Stop();
 
-            if (mSURFEnabled)
-            {
-                // Match newly detected keypoints against all keypoints
-                mSurfGlobalMatcher.KnnMatch(surf_keypoint_features, matches_all, matches_all_distances, k, null);
-                if (!isCenterNaN)
+                mCurrentFrameKeypoints = keypoint_vector;
+                mCurrentFrameFeatures = keypoint_features;
+
+                FindPotentialObjectKeypoints(frame);
+
+                MatchObjectFeatures();
+
+                AddTrackedKeypoints(tracked_keypoints, tracked_classes);
+
+                mActiveKeypoints = mUpdatedKeypoints;
+                mActiveKeypointClasses = mUpdatedKeypointClasses;
+                //mActiveFeatures = mUpdatedFeaturesMatrix;
+
+                mPreviousFrame.Dispose();
+                mPreviousFrame = mCurrentFrame;
+
+                bValid = false;
+                mBoundingBox = new RectangleF();
+
+                // Update state estimate
+                if ((!mIsCenterNaN) && (mActiveKeypoints.Count > ((float)mInitialKeypointCount / 10.0)))
                 {
-                    // Match newly detected keypoints againt object model keypoints
-                    selected_matches = new Matrix<int>(surf_keypoint_features.Rows, mActiveKeypoints.Count);
-                    selected_matches_distances = new Matrix<float>(surf_keypoint_features.Rows, mSelectedKeypoints.Count);
-                    mSurfObjectMatcher.KnnMatch(surf_keypoint_features, selected_matches, selected_matches_distances, mSelectedKeypoints.Count, null);
+                    bValid = true;
+                    mPrevCenter = mCenter;
+
+                    PointF centerTopLeft = Transform(mCenterTopLeft, mScaleEstimate, -mRotationEstimate);
+                    PointF centerTopRight = Transform(mCenterTopRight, mScaleEstimate, -mRotationEstimate);
+                    PointF centerBottomRight = Transform(mCenterBottomRight, mScaleEstimate, -mRotationEstimate);
+                    PointF centerBottomLeft = Transform(mCenterBottomLeft, mScaleEstimate, -mRotationEstimate);
+
+                    PointF TopLeft = new PointF(mCenter.X + centerTopLeft.X, mCenter.Y + centerTopLeft.Y);
+                    PointF TopRight = new PointF(mCenter.X + centerTopRight.X, mCenter.Y + centerTopRight.Y);
+                    PointF BottomLeft = new PointF(mCenter.X + centerBottomLeft.X, mCenter.Y + centerBottomLeft.Y);
+                    PointF BottomRight = new PointF(mCenter.X + centerBottomRight.X, mCenter.Y + centerBottomRight.Y);
+
+                    int minX = (int)(new float[] { TopLeft.X, TopRight.X, BottomLeft.X, BottomRight.X }).Min();
+                    int maxX = (int)(new float[] { TopLeft.X, TopRight.X, BottomLeft.X, BottomRight.X }).Max();
+                    int minY = (int)(new float[] { TopLeft.Y, TopRight.Y, BottomLeft.Y, BottomRight.Y }).Min();
+                    int maxY = (int)(new float[] { TopLeft.Y, TopRight.Y, BottomLeft.Y, BottomRight.Y }).Max();
+
+                    mBoundingBox = new RectangleF(minX, minY, (maxX - minX), (maxY - minY));
                 }
 
-                // If adaptive model active, match keypoints against it
-                if (mAdaptiveModelValid)
+                if (!mIsCenterNaN && !mBoundingBox.IsEmpty)
                 {
-                    mAdaptiveSurfGlobalMatcher.KnnMatch(surf_keypoint_features, adaptive_matches_all, adaptive_matches_all_distances, k, null);
-                    if (!isCenterNaN)
+                    float temp_stddev = VarianceDistance(mCenter, ROI);
+                    if (temp_stddev > mVarianceDistance * 1.5)
                     {
-                        // Match newly detected keypoints againt object model keypoints
-                        adaptive_selected_matches = new Matrix<int>(surf_keypoint_features.Rows, mActiveKeypoints.Count);
-                        adaptive_selected_matches_distances = new Matrix<float>(surf_keypoint_features.Rows, mSelectedKeypoints.Count);
-                        mSurfObjectMatcher.KnnMatch(surf_keypoint_features, adaptive_selected_matches, adaptive_selected_matches_distances, mAdaptiveSelectedKeypoints.Count, null);
+                        mVarianceDistance = (float)(mVarianceDistance * 1.5);
+                    }
+                    else if (temp_stddev < mMinVarianceDistance)
+                    {
+                        mVarianceDistance = mMinVarianceDistance;
+                    }
+                    else
+                    {
+                        mVarianceDistance = temp_stddev;
                     }
                 }
-            }
-            else
-            {
-                // Match newly detected keypoints against all keypoints
-                mGlobalMatcher.KnnMatch(keypoint_features, matches_all, matches_all_distances, k, null);
-                if (!isCenterNaN)
+
+                mAdaptiveBackgroundModel = false;
+                if (bValid && !mBoundingBox.IsEmpty)
                 {
-                    // Match newly detected keypoints againt object model keypoints
-                    selected_matches = new Matrix<int>(keypoint_features.Rows, mActiveKeypoints.Count);
-                    selected_matches_distances = new Matrix<float>(keypoint_features.Rows, mSelectedKeypoints.Count);
-                    mObjectMatcher.KnnMatch(keypoint_features, selected_matches, selected_matches_distances, mSelectedKeypoints.Count, null);
+                    mAdaptiveBackgroundModel = true;
+                    UpdateAdaptiveBackground();
+
+                    mAdaptiveBackgroundKeypointsPrevious = null;
+                    mAdaptiveBackgroundKeypointsPrevious = new List<MKeyPoint>(mAdaptiveBackgroundKeypoints);
+                    mAdaptiveBackgroundFeaturesPrevious = null;
+                    mAdaptiveBackgroundFeaturesPrevious = mAdaptiveBackgroundFeatures.Clone();
                 }
+                else
+                {
+                    mAdaptiveSurfBackgroundMatcher = null;
+                    mAdaptiveSurfBackgroundMatcher = new BruteForceMatcher<float>(DistanceType.L2);
+                    mAdaptiveSurfBackgroundMatcher.Add(mAdaptiveBackgroundFeaturesPrevious);
+                }
+
+                //using (StreamWriter sw = File.AppendText(@"C:\Users\Josh\Desktop\Josh\Research\CMT_Timings\process.txt"))
+                //{
+                //    sw.WriteLine("{0},{1},{2},{3},{4},{5},{6}", sw1.ElapsedMilliseconds, sw2.ElapsedMilliseconds, sw3.ElapsedMilliseconds, sw4.ElapsedMilliseconds, sw5.ElapsedMilliseconds, sw6.ElapsedMilliseconds, sw7.ElapsedMilliseconds);
+                //}
+
+                using (StreamWriter sw = File.AppendText(@"C:\Users\Josh\Desktop\Josh\Research\CMT_Timings\keypoints.txt"))
+                {
+                    sw.WriteLine("{0},{1},{2},{3}", total_num_keypoints, num_object_model_keypoints, num_bgnd_model_keypoints, num_poss_object_keypoints);
+                }
+
+                return RectFToRect(mBoundingBox);
             }
 
-            if (keypoint_vector.Length > 0)
+            return new Rectangle();
+            // ***************************************************************************************************************************
+            // ... Updated Code ))
+            // ***************************************************************************************************************************
+        }
+
+        private void ClearVariables()
+        {
+            mPossibleObjectKeypoints.Clear();
+            mPossibleObjectFeatures = null;
+
+            mMatchedBackgroundKeypoints.Clear();
+            mMatchedBackgroundFeatures.Clear();
+            mMatchedBackgroundMatches = null;
+
+            mHomographyBackgroundKeypoints.Clear();
+            mHomographyBackgroundFeatures = null;
+
+            mUpdatedKeypoints.Clear();
+            mUpdatedKeypointClasses.Clear();
+            mUpdatedKeypointFeatures.Clear();
+            mUpdatedConfidences.Clear();
+            mUpdatedFeaturesMatrix = null;
+            mUpdatedKeypointMatchesPoints.Clear();
+            mUpdatedMKeypoints.Clear();
+            mUpdatedKeypointMatches.Clear();
+            mUpdatedDistances.Clear();
+        }
+
+        // This function will find which points are a confident match to the background 
+        // and which keypoints should be considered as possible matches for the object.
+        private void FindPotentialObjectKeypoints(Image<Gray, Byte> frame)
+        { 
+            FindPossibleBackgroundKeypoints();
+            HomographyOfBackgroundKeypoints();
+        }
+
+        // This function goes through the first step of background matching.
+        // This will provide a list of keypoints and features that are a confident match to the background.
+        // However, homography will be done as a second check to make sure the matches are correct.
+        private void FindPossibleBackgroundKeypoints()
+        {
+            int k = 2;
+            Matrix<int> bgnd_matches_all;
+            Matrix<float> bgnd_matches_all_distances;
+            
+            bgnd_matches_all = new Matrix<int>(mCurrentFrameFeatures.Rows, k);
+            bgnd_matches_all_distances = new Matrix<float>(mCurrentFrameFeatures.Rows, k);
+
+            // Matches all newly extracked features against only the model background features
+            //sw3.Restart();
+            mAdaptiveSurfBackgroundMatcher.KnnMatch(mCurrentFrameFeatures, bgnd_matches_all, bgnd_matches_all_distances, k, null);
+            //sw3.Stop();
+
+            // Go through matches and get rid of features that match to background
+            //sw4.Restart();
+
+            MKeyPoint location;
+            Matrix<float> features;
+            Matrix<int> matches;
+            Matrix<float> distances;
+            Matrix<float> confidences;
+            List<int> matchList;
+            List<float> distList;
+            List<int> sortedOrder;
+            int bestInd;
+            int secondBestInd;
+            float ratio;
+            float confidence;
+            //sw9.Reset();
+            //sw10.Reset();
+            if (mCurrentFrameKeypoints.Length > 0)
             {
-                List<PointF> transformedSprings = Transform(mSprings, scaleEstimate, -rotationEstimate);
-                for (int kpvi = 0; kpvi < keypoint_vector.Length; kpvi++)
+                //sw7.Restart();
+                for (int skpi = 0; skpi < mCurrentFrameKeypoints.Length; skpi++)
                 {
-                    PointF location = keypoint_vector[kpvi].Point;
-                    Matrix<byte> features = (mSURFEnabled) ? null : keypoint_features.GetRow(kpvi);
-                    Matrix<float> surf_features = (mSURFEnabled) ? surf_keypoint_features.GetRow(kpvi) : null;
+                    //sw9.Start();
+                    location = mCurrentFrameKeypoints[skpi];
+                    features = mCurrentFrameFeatures.GetRow(skpi);
+                    matches = bgnd_matches_all.GetRow(skpi);
+                    distances = bgnd_matches_all_distances.GetRow(skpi);
+                    confidences = 1 - distances;
+                    //sw9.Stop();
+                    //sw10.Start();
+                    matchList = new List<int>();
+                    distList = new List<float>();
+                    for (int d = 0; d < matches.Width; d++)
+                    {
+                        matchList.Add(matches[0, d]);
+                        distList.Add(distances[0, d]);
+                    }
+
+                    sortedOrder = IndexSort<float>(distList, true);
+                    matchList = ReorderList<int>(matchList, sortedOrder);
+                    distList = ReorderList<float>(distList, sortedOrder);
+                    for (int d = 0; d < matches.Width; d++)
+                    {
+                        distances[0, d] = distList[d];
+                    }
+
+                    bestInd = matchList[0];
+                    secondBestInd = matchList[1];
+                    ratio = (1 - confidences[0, 0]) / (1 - confidences[0, 1]);
+                    confidence = confidences[0, 0];
+                    //sw10.Stop();
+                    
+                    // If the match is not a good one, this means that it is probably not a background keypoint
+                    // and should be added to the possible object keypoint list for further matching.
+                    if ((ratio > mSURFMatchingConfidenceRatio) &&
+                        (confidence < mSURFMatchingConfidenceThreshold))
+                    {
+                        mPossibleObjectKeypoints.Add(location);
+
+                        if (mPossibleObjectFeatures == null || mPossibleObjectFeatures.Rows == 0)
+                        {
+                            mPossibleObjectFeatures = features;
+                        }
+                        else
+                        {
+                            mPossibleObjectFeatures = mPossibleObjectFeatures.ConcateVertical(features);
+                        }
+                    }
+                    // If it is a good match to the background, add it to the background list for further
+                    // evaluation using homography
+                    else
+                    {
+                        // Add to adaptive background model
+                        mMatchedBackgroundKeypoints.Add(location);
+                        mMatchedBackgroundFeatures.Add(features);
+
+                        int[,] new_match = new int[1, 2];
+                        new_match[0, 0] = matchList[0];
+                        new_match[0, 1] = matchList[1];
+
+                        if (mMatchedBackgroundMatches == null || mMatchedBackgroundMatches.Rows == 0)
+                        {
+                            mMatchedBackgroundMatches = new Matrix<int>(new_match);
+                        }
+                        else
+                        {
+                            mMatchedBackgroundMatches = mMatchedBackgroundMatches.ConcateVertical(new Matrix<int>(new_match));
+                        }
+                    }
+                    
+                }
+                //sw7.Stop();
+            }
+        }
+
+        // This function runs the homography algorihtm on all background matches from the 
+        // previous to step to make sure they match to the correct keypoints.
+        private void HomographyOfBackgroundKeypoints()
+        {
+            //sw8.Restart();
+            // For Debugging Purposes
+            List<Tuple<PointF, PointF>> background_matches = new List<Tuple<PointF, PointF>>();
+
+            // Homography Calculation to detect outliers
+            Matrix<byte> mask = new Matrix<byte>(mMatchedBackgroundKeypoints.Count, 1);
+            mask.SetValue(1);
+            VectorOfKeyPoint modelKeypoints = new VectorOfKeyPoint();
+            VectorOfKeyPoint observedKeypoints = new VectorOfKeyPoint();
+
+            modelKeypoints.Push((mAdaptiveBackgroundModel) ? mAdaptiveBackgroundKeypoints.ToArray() : mAdaptiveBackgroundKeypointsPrevious.ToArray());
+            observedKeypoints.Push(mMatchedBackgroundKeypoints.ToArray());
+
+            HomographyMatrix homography = Features2DToolbox.GetHomographyMatrixFromMatchedFeatures(modelKeypoints, observedKeypoints, mMatchedBackgroundMatches, mask, 2);
+
+            for (int mask_index = 0; mask_index < mask.Rows; mask_index++)
+            {
+                // This keypoint is considered an outlier to the background and will be added to the possible object keypoints
+                if (mask[mask_index, 0] == 0)
+                {
+                    mPossibleObjectKeypoints.Add(mMatchedBackgroundKeypoints[mask_index]);
+
+                    if (mPossibleObjectFeatures == null || mPossibleObjectFeatures.Rows == 0)
+                    {
+                        mPossibleObjectFeatures = mMatchedBackgroundFeatures[mask_index];
+                    }
+                    else
+                    {
+                        mPossibleObjectFeatures = mPossibleObjectFeatures.ConcateVertical(mMatchedBackgroundFeatures[mask_index]);
+                    }
+                    
+                }
+                // It is an inlier to the background, so it should be kept as a background keypoint
+                else
+                {
+                    mHomographyBackgroundKeypoints.Add(mMatchedBackgroundKeypoints[mask_index]);
+
+                    if (mHomographyBackgroundFeatures == null || mHomographyBackgroundFeatures.Rows == 0)
+                    {
+                        mHomographyBackgroundFeatures = mMatchedBackgroundFeatures[mask_index];
+                    }
+                    else
+                    {
+                        mHomographyBackgroundFeatures = mHomographyBackgroundFeatures.ConcateVertical(mMatchedBackgroundFeatures[mask_index]);
+                    }
+
+                    //int bestInd = mMatchedBackgroundMatches.GetRow(mask_index)[0, 0];
+
+                    // For Debugging Purposes
+                    //background_matches.Add(new Tuple<PointF, PointF>(((mAdaptiveBackgroundModel) ? mAdaptiveBackgroundKeypoints[bestInd].Point : mAdaptiveBackgroundKeypointsPrevious[bestInd].Point), mMatchedBackgroundKeypoints[mask_index].Point));
+                }
+            }
+            //sw8.Stop();
+            //sw4.Stop();
+            // For Debugging Purposes
+            //VisualizeMatches(background_matches, mPreviousFrame, mCurrentFrame, "background_matches");
+        }
+
+        // This function matches the remaining points not taken out through background subtraction 
+        // to the model object.
+        private void MatchObjectFeatures()
+        {
+            // For Debugging Purposes
+            List<Tuple<PointF, PointF>> object_matches = new List<Tuple<PointF, PointF>>();
+
+            int k = 2;
+            Matrix<int> matches_all;
+            Matrix<float> matches_all_distances;
+
+            if (mPossibleObjectFeatures != null && mPossibleObjectFeatures.Rows > 0)
+            {
+                matches_all = new Matrix<int>(mPossibleObjectFeatures.Rows, k);
+                matches_all_distances = new Matrix<float>(mPossibleObjectFeatures.Rows, k);
+
+                num_poss_object_keypoints = mPossibleObjectFeatures.Rows;
+
+                //sw5.Restart();
+                mSurfObjectMatcher.KnnMatch(mPossibleObjectFeatures, matches_all, matches_all_distances, k, null);
+                //sw5.Stop();
+
+                List<PointF> transformedSprings = Transform(mSprings, mScaleEstimate, -mRotationEstimate);
+
+                //sw6.Restart();
+                for (int kpvi = 0; kpvi < mPossibleObjectKeypoints.Count; kpvi++)
+                {
+                    MKeyPoint location = mPossibleObjectKeypoints[kpvi];
+                    Matrix<float> features = mPossibleObjectFeatures.GetRow(kpvi);
                     Matrix<int> matches = matches_all.GetRow(kpvi);
                     Matrix<float> distances = matches_all_distances.GetRow(kpvi);
                     Matrix<float> confidences = 1 - (distances / mMatchingConfidenceScaleFactor);
 
                     List<int> matchList = new List<int>();
                     List<float> distList = new List<float>();
+                    List<int> sortedOrder;
+
                     for (int d = 0; d < matches.Width; d++)
                     {
                         matchList.Add(matches[0, d]);
                         distList.Add(distances[0, d]);
                     }
-                    List<int> sortedOrder = IndexSort<float>(distList, true);
+
+                    sortedOrder = IndexSort<float>(distList, true);
                     matchList = ReorderList<int>(matchList, sortedOrder);
                     distList = ReorderList<float>(distList, sortedOrder);
+
                     for (int d = 0; d < matches.Width; d++)
                     {
                         distances[0, d] = distList[d];
@@ -1247,48 +1502,74 @@ namespace CMT_Tracker
                     int bestInd = matchList[0];
                     int secondBestInd = matchList[1];
                     float ratio = (1 - confidences[0, 0]) / (1 - confidences[0, 1]);
-                    int keypoint_class = mAllKeypointClasses[bestInd];
-
-                    float confidence = confidences[0, 0];
-                    if ((ratio < (mSURFEnabled ? mSURFMatchingConfidenceRatio : mMatchingConfidenceRatio)) &&
-                        (confidence > (mSURFEnabled? mSURFMatchingConfidenceThreshold : mMatchingConfidenceThreshold)) &&
-                        (keypoint_class != 0))
+                    int keypoint_class;
+                    if(bestInd == -1)
                     {
-                        while (updatedKeypointClasses.Contains(keypoint_class))
+                        keypoint_class = -1;
+                    }
+                    else
+                    {
+                        keypoint_class = mSelectedKeypointClasses[bestInd];
+                    }
+                    
+                    float confidence = confidences[0, 0];
+
+                    if (!mIsCenterNaN)
+                    {
+                        float distanceFromCenter = L2Norm(mCenter, location.Point);
+                        float gaussianCoef = GaussianDistFunction(distanceFromCenter);
+                        //confidence *= ((mWeightedMaxDistance - distanceFromCenter) / mWeightedMaxDistance);
+                        confidence *= gaussianCoef;
+                    }
+
+                    if ((ratio < mSURFMatchingConfidenceRatio) &&
+                        (confidence > (!mIsCenterNaN ? mWeightedDistanceConfThreshold : mSURFMatchingConfidenceThreshold)) &&
+                        (keypoint_class != -1))
+                    {
+                        if (mUpdatedKeypointClasses.Contains(keypoint_class))
                         {
-                            int index = updatedKeypointClasses.IndexOf(keypoint_class);
-                            updatedKeypointClasses.RemoveAt(index);
-                            updatedKeypoints.RemoveAt(index);
-
-                            if (mSURFEnabled)
+                            int index = mUpdatedKeypointClasses.IndexOf(keypoint_class);
+                            if (index < mUpdatedKeypointClasses.Count && mUpdatedConfidences[index] < confidence)
                             {
-                                updatedSurfKeypointFeatures.RemoveAt(index);
+                                if (mUpdatedKeypointClasses.Contains(keypoint_class))
+                                {
+                                    index = mUpdatedKeypointClasses.IndexOf(keypoint_class);
+                                    mUpdatedKeypointClasses.RemoveAt(index);
+                                    mUpdatedKeypoints.RemoveAt(index);
+                                    mUpdatedMKeypoints.RemoveAt(index);
+                                    mUpdatedKeypointFeatures.RemoveAt(index);
+                                    mUpdatedConfidences.RemoveAt(index);
+                                    mUpdatedKeypointMatchesPoints.RemoveAt(index);
+                                    mUpdatedKeypointMatches.RemoveAt(index);
+                                    mUpdatedDistances.RemoveAt(index);
+                                }
+                                mUpdatedKeypoints.Add(location.Point);
+                                mUpdatedMKeypoints.Add(location);
+                                mUpdatedKeypointClasses.Add(keypoint_class);
+                                mUpdatedKeypointFeatures.Add(features);
+                                mUpdatedConfidences.Add(confidence);
+                                mUpdatedKeypointMatchesPoints.Add(mSelectedKeypoints[bestInd]);
+                                mUpdatedKeypointMatches.Add(matches);
+                                mUpdatedDistances.Add(distances);
                             }
-                            else
-                            {
-                                updatedKeypointFeatures.RemoveAt(index);
-                            }
-
-                            updatedConfidences.RemoveAt(index);
-                        }
-                        updatedKeypoints.Add(location);
-                        updatedKeypointClasses.Add(keypoint_class);
-
-                        if (mSURFEnabled)
-                        {
-                            updatedSurfKeypointFeatures.Add(surf_features);
                         }
                         else
                         {
-                            updatedKeypointFeatures.Add(features);
+                            mUpdatedKeypoints.Add(location.Point);
+                            mUpdatedMKeypoints.Add(location);
+                            mUpdatedKeypointClasses.Add(keypoint_class);
+                            mUpdatedKeypointFeatures.Add(features);
+                            mUpdatedConfidences.Add(confidence);
+                            mUpdatedKeypointMatchesPoints.Add(mSelectedKeypoints[bestInd]);
+                            mUpdatedKeypointMatches.Add(matches);
+                            mUpdatedDistances.Add(distances);
                         }
-
-                        updatedConfidences.Add(confidence);
                     }
-                    if (!isCenterNaN)
+
+                    if (!mIsCenterNaN)
                     {
-                        matches = selected_matches.GetRow(kpvi);
-                        distances = selected_matches_distances.GetRow(kpvi);
+                        matches = matches_all.GetRow(kpvi);
+                        distances = matches_all_distances.GetRow(kpvi);
                         matchList = new List<int>();
                         distList = new List<float>();
                         for (int d = 0; d < matches.Width; d++)
@@ -1307,7 +1588,8 @@ namespace CMT_Tracker
 
                         confidences = 1 - (distances / mMatchingConfidenceScaleFactor);
 
-                        PointF relative_location = new PointF(location.X - centerEstimate.X, location.Y - centerEstimate.Y);
+                        PointF relative_location = new PointF(location.Point.X - (!mIsCenterNaN ? mCenter.X : mPrevCenter.X),
+                                                              location.Point.Y - (!mIsCenterNaN ? mCenter.Y : mPrevCenter.Y));
                         List<float> weightedConf = new List<float>();
                         for (int s = 0; s < matchList.Count; s++)
                         {
@@ -1335,171 +1617,228 @@ namespace CMT_Tracker
 
                         confidence = weightedConf[0];
                         //# If distance ratio is ok and absolute distance is ok and keypoint class is not background
-                        if ((ratio < mMatchingConfidenceRatio) &&
-                            (confidence > mMatchingConfidenceThreshold) &&
-                            (keypoint_class != 0))
+                        if ((ratio < mSURFMatchingConfidenceRatio) &&
+                            (confidence > mSURFMatchingConfidenceThreshold))
                         {
-                            if (updatedKeypointClasses.Contains(keypoint_class))
+                            if (mUpdatedKeypointClasses.Contains(keypoint_class))
                             {
-                                int index = updatedKeypointClasses.IndexOf(keypoint_class);
-                                if (updatedConfidences[index] < confidence)
+                                int index = mUpdatedKeypointClasses.IndexOf(keypoint_class);
+                                if (mUpdatedConfidences[index] < confidence)
                                 {
-                                    while (updatedKeypointClasses.Contains(keypoint_class))
+                                    while (mUpdatedKeypointClasses.Contains(keypoint_class))
                                     {
-                                        index = updatedKeypointClasses.IndexOf(keypoint_class);
-                                        updatedKeypointClasses.RemoveAt(index);
-                                        updatedKeypoints.RemoveAt(index);
-
-                                        if (mSURFEnabled)
-                                        {
-                                            updatedSurfKeypointFeatures.RemoveAt(index);
-                                        }
-                                        else
-                                        {
-                                            updatedKeypointFeatures.RemoveAt(index);
-                                        }
-
-                                        updatedConfidences.RemoveAt(index);
+                                        index = mUpdatedKeypointClasses.IndexOf(keypoint_class);
+                                        mUpdatedKeypointClasses.RemoveAt(index);
+                                        mUpdatedKeypoints.RemoveAt(index);
+                                        mUpdatedMKeypoints.RemoveAt(index);
+                                        mUpdatedKeypointFeatures.RemoveAt(index);
+                                        mUpdatedConfidences.RemoveAt(index);
+                                        mUpdatedKeypointMatchesPoints.RemoveAt(index);
+                                        mUpdatedKeypointMatches.RemoveAt(index);
+                                        mUpdatedDistances.RemoveAt(index);
                                     }
-                                    updatedKeypoints.Add(location);
-                                    updatedKeypointClasses.Add(keypoint_class);
-
-                                    if (mSURFEnabled)
-                                    {
-                                        updatedSurfKeypointFeatures.Add(surf_features);
-                                    }
-                                    else
-                                    {
-                                        updatedKeypointFeatures.Add(features);
-                                    }
-
-                                    updatedConfidences.Add(confidence);
+                                    mUpdatedKeypoints.Add(location.Point);
+                                    mUpdatedMKeypoints.Add(location);
+                                    mUpdatedKeypointClasses.Add(keypoint_class);
+                                    mUpdatedKeypointFeatures.Add(features);
+                                    mUpdatedConfidences.Add(confidence);
+                                    mUpdatedKeypointMatchesPoints.Add(mSelectedKeypoints[bestInd]);
+                                    mUpdatedKeypointMatches.Add(matches);
+                                    mUpdatedDistances.Add(distances);
                                 }
+                            }
+                            else
+                            {
+                                mUpdatedKeypoints.Add(location.Point);
+                                mUpdatedMKeypoints.Add(location);
+                                mUpdatedKeypointClasses.Add(keypoint_class);
+                                mUpdatedKeypointFeatures.Add(features);
+                                mUpdatedConfidences.Add(confidence);
+                                mUpdatedKeypointMatchesPoints.Add(mSelectedKeypoints[bestInd]);
+                                mUpdatedKeypointMatches.Add(matches);
+                                mUpdatedDistances.Add(distances);
                             }
                         }
                     }
                 }
-                
-                // Add all tracked, but unmatched keypoints
-                for (int tkp = 0; tkp < tracked_keypoints.Length; tkp++)
-                {
-                    int keypoint_class = tracked_classes[tkp];
-                    if (!updatedKeypointClasses.Contains(keypoint_class))
-                    {
-                        PointF location = tracked_keypoints[tkp];
-                        Matrix<byte> features = (mSURFEnabled) ? null : mActiveKeypointFeatures.GetRow(tkp);
-                        Matrix<float> surf_features = (mSURFEnabled) ? mSurfActiveKeypointFeatures.GetRow(tkp) : null;
-                        updatedKeypoints.Add(location);
-                        updatedKeypointClasses.Add(keypoint_class);
 
-                        if (mSURFEnabled)
+                Matrix<float> temp_distances = null;
+
+                foreach (Matrix<float> d in mUpdatedDistances)
+                {
+                    if(temp_distances == null || temp_distances.Rows == 0)
+                    {
+                        temp_distances = d;
+                    }
+                    else
+                    {
+                        temp_distances = temp_distances.ConcateVertical(d);
+                    }
+                }
+
+                List<PointF> temp_kpts = new List<PointF>();
+                Matrix<float> temp_feats = null;
+                List<int> temp_classes = new List<int>();
+
+                // Homography Calculation to detect outliers
+                Matrix<byte> mask = new Matrix<byte>(mUpdatedKeypoints.Count, 1);
+                mask.SetValue(1);
+                VectorOfKeyPoint modelKeypoints = new VectorOfKeyPoint();
+                VectorOfKeyPoint observedKeypoints = new VectorOfKeyPoint();
+                
+                modelKeypoints.Push(mSelectedMKeypoints.ToArray());
+                observedKeypoints.Push(mUpdatedMKeypoints.ToArray());
+
+                Matrix<int> temp_matches = null;
+                if (mUpdatedKeypointMatches != null)
+                {
+                    for (int mi = 0; mi < mUpdatedKeypointMatches.Count; mi++)
+                    {
+                        if (temp_matches == null)
                         {
-                            updatedSurfKeypointFeatures.Add(surf_features);
+                            temp_matches = mUpdatedKeypointMatches[mi];
                         }
                         else
                         {
-                            updatedKeypointFeatures.Add(features);
+                            temp_matches = temp_matches.ConcateVertical(mUpdatedKeypointMatches[mi]);
                         }
                     }
                 }
 
-
-                mActiveKeypoints = updatedKeypoints;
-                mActiveKeypointClasses = updatedKeypointClasses;
-
-                mPreviousFrame.Dispose();
-                mPreviousFrame = frame;
-
-                mCenter = centerEstimate;
-                mScaleEstimate = scaleEstimate;
-                mRotationEstimate = rotationEstimate;
-
-                bValid = false;
-                // Update state estimate
-                if ((!isCenterNaN) && (mActiveKeypoints.Count > ((float)mInitialKeypointCount / 10.0)))
+                if (temp_matches != null && temp_matches.Rows > 0)
                 {
-                    bValid = true;
+                    //Features2DToolbox.VoteForUniqueness(temp_distances, 0.8, mask);
+                    //Features2DToolbox.VoteForSizeAndOrientation(modelKeypoints, observedKeypoints, temp_matches, mask, 1.5, 20);
+                    HomographyMatrix homography = Features2DToolbox.GetHomographyMatrixFromMatchedFeatures(modelKeypoints, observedKeypoints, temp_matches, mask, 2);
 
-                    PointF centerTopLeft = Transform(mCenterTopLeft, mScaleEstimate, -mRotationEstimate);
-                    PointF centerTopRight = Transform(mCenterTopRight, mScaleEstimate, -mRotationEstimate);
-                    PointF centerBottomRight = Transform(mCenterBottomRight, mScaleEstimate, -mRotationEstimate);
-                    PointF centerBottomLeft = Transform(mCenterBottomLeft, mScaleEstimate, -mRotationEstimate);
+                    for (int mask_index = 0; mask_index < mask.Rows; mask_index++)
+                    {
+                        // This keypoint is considered an outlier to the object and will be added to the background keypoints
+                        if (mask[mask_index, 0] == 0)
+                        {
+                            mHomographyBackgroundKeypoints.Add(mUpdatedMKeypoints[mask_index]);
 
-                    PointF TopLeft = new PointF(mCenter.X + centerTopLeft.X, mCenter.Y + centerTopLeft.Y);
-                    PointF TopRight = new PointF(mCenter.X + centerTopRight.X, mCenter.Y + centerTopRight.Y);
-                    PointF BottomLeft = new PointF(mCenter.X + centerBottomLeft.X, mCenter.Y + centerBottomLeft.Y);
-                    PointF BottomRight = new PointF(mCenter.X + centerBottomRight.X, mCenter.Y + centerBottomRight.Y);
+                            if (mHomographyBackgroundFeatures == null || mHomographyBackgroundFeatures.Rows == 0)
+                            {
+                                mHomographyBackgroundFeatures = mUpdatedKeypointFeatures[mask_index];
+                            }
+                            else
+                            {
+                                mHomographyBackgroundFeatures = mHomographyBackgroundFeatures.ConcateVertical(mUpdatedKeypointFeatures[mask_index]);
+                            }
 
-                    int minX = (int)(new float[] { TopLeft.X, TopRight.X, BottomLeft.X, BottomRight.X }).Min();
-                    int maxX = (int)(new float[] { TopLeft.X, TopRight.X, BottomLeft.X, BottomRight.X }).Max();
-                    int minY = (int)(new float[] { TopLeft.Y, TopRight.Y, BottomLeft.Y, BottomRight.Y }).Min();
-                    int maxY = (int)(new float[] { TopLeft.Y, TopRight.Y, BottomLeft.Y, BottomRight.Y }).Max();
+                        }
+                        // It is an inlier to the object, so it should be kept as a object keypoint
+                        else
+                        {
+                            temp_kpts.Add(mUpdatedKeypoints[mask_index]);
+                            temp_classes.Add(mUpdatedKeypointClasses[mask_index]);
 
-                    mBoundingBox = new Rectangle(minX, minY, (maxX - minX), (maxY - minY));
+                            if (temp_feats == null || temp_feats.Rows == 0)
+                            {
+                                temp_feats = mUpdatedKeypointFeatures[mask_index];
+                            }
+                            else
+                            {
+                                temp_feats = temp_feats.ConcateVertical(mUpdatedKeypointFeatures[mask_index]);
+                            }
 
+                            //object_matches.Add(new Tuple<PointF, PointF>(mUpdatedKeypointMatchesPoints[mask_index], mUpdatedKeypoints[mask_index]));
+                        }
+                    }
+                }
+                //sw6.Stop();
+
+                if (mUpdatedKeypoints.Count > 0)
+                {
+                    for (int mi = 0; mi < mUpdatedKeypoints.Count; mi++)
+                    {
+                        object_matches.Add(new Tuple<PointF, PointF>(mUpdatedKeypointMatchesPoints[mi], mUpdatedKeypoints[mi]));
+                    }
                 }
 
-                // If not tracked, try to find the center and BB using matched keypoints
-                //else if ((isCenterNaN) && (mActiveKeypoints.Count > ((float)mInitialKeypointCount / 10.0)))
-                //{
-                //    PointF[] newActiveKeypoints = mActiveKeypoints.ToArray();
-                //    int[] newActiveKeypoinyClasses = mActiveKeypointClasses.ToArray();
-                //    Estimate(ref newActiveKeypoints, ref newActiveKeypoinyClasses,
-                //        ref centerEstimate, ref scaleEstimate, ref rotationEstimate);
-                //    isCenterNaN = float.IsNaN(centerEstimate.X) || float.IsNaN(centerEstimate.Y);
+                //VisualizeMatches(object_matches, mOriginalImage, mCurrentFrame, "object_matches");
 
-                //    if(!isCenterNaN)
-                //    {
-                //        mCenter = centerEstimate;
-                //        mScaleEstimate = scaleEstimate;
-                //        mRotationEstimate = rotationEstimate;
+                if(temp_feats != null && temp_feats.Rows > 0)
+                {
+                    mUpdatedFeaturesMatrix = temp_feats.Clone();
+                    mUpdatedKeypoints.Clear();
+                    mUpdatedKeypointClasses.Clear();
 
-                //        bValid = true;
-
-                //        PointF centerTopLeft = Transform(mCenterTopLeft, mScaleEstimate, -mRotationEstimate);
-                //        PointF centerTopRight = Transform(mCenterTopRight, mScaleEstimate, -mRotationEstimate);
-                //        PointF centerBottomRight = Transform(mCenterBottomRight, mScaleEstimate, -mRotationEstimate);
-                //        PointF centerBottomLeft = Transform(mCenterBottomLeft, mScaleEstimate, -mRotationEstimate);
-
-                //        PointF TopLeft = new PointF(mCenter.X + centerTopLeft.X, mCenter.Y + centerTopLeft.Y);
-                //        PointF TopRight = new PointF(mCenter.X + centerTopRight.X, mCenter.Y + centerTopRight.Y);
-                //        PointF BottomLeft = new PointF(mCenter.X + centerBottomLeft.X, mCenter.Y + centerBottomLeft.Y);
-                //        PointF BottomRight = new PointF(mCenter.X + centerBottomRight.X, mCenter.Y + centerBottomRight.Y);
-
-                //        int minX = (int)(new float[] { TopLeft.X, TopRight.X, BottomLeft.X, BottomRight.X }).Min();
-                //        int maxX = (int)(new float[] { TopLeft.X, TopRight.X, BottomLeft.X, BottomRight.X }).Max();
-                //        int minY = (int)(new float[] { TopLeft.Y, TopRight.Y, BottomLeft.Y, BottomRight.Y }).Min();
-                //        int maxY = (int)(new float[] { TopLeft.Y, TopRight.Y, BottomLeft.Y, BottomRight.Y }).Max();
-
-                //        mBoundingBox = new Rectangle(minX, minY, (maxX - minX), (maxY - minY));
-                //    }
-                //}
-
-                return RectFToRect(mBoundingBox);
+                    for (int p = 0; p < temp_kpts.Count; p++)
+                    {
+                        mUpdatedKeypoints.Add(temp_kpts[p]);
+                        mUpdatedKeypointClasses.Add(temp_classes[p]);
+                    }
+                }
             }
-
-            return new Rectangle();
         }
 
+        // This function adds all tracked but unmatched keypoints to the active keypoint list
+        private void AddTrackedKeypoints(PointF[] tracked_keypoints, int[] tracked_classes)
+        {
+            for (int tkp = 0; tkp < tracked_keypoints.Length; tkp++)
+            {
+                int keypoint_class = tracked_classes[tkp];
+                if (mUpdatedKeypointClasses != null && !mUpdatedKeypointClasses.Contains(keypoint_class))
+                {
+                    PointF location = tracked_keypoints[tkp];
+                    Matrix<float> features = mActiveFeatures.GetRow(tkp);
+
+                    mUpdatedKeypoints.Add(location);
+                    mUpdatedKeypointClasses.Add(keypoint_class);
+                    mUpdatedKeypointFeatures.Add(features);
+                }
+            }
+        }        
+
+        // This function adds all keypoints outside of the tracked ROI to the background list
+        private void UpdateAdaptiveBackground()
+        {
+            RectangleF newBB = new RectangleF((int)(mBoundingBox.X - 0.3 * mBoundingBox.X), (int)(mBoundingBox.Y - 0.3 * mBoundingBox.Y), (int)(1.6 * mBoundingBox.Width), (int)(1.6 * mBoundingBox.Y));
+
+            mAdaptiveBackgroundKeypoints = null;
+            mAdaptiveBackgroundKeypoints = new List<MKeyPoint>(mHomographyBackgroundKeypoints);
+            mAdaptiveBackgroundFeatures = null;
+            mAdaptiveBackgroundFeatures = mHomographyBackgroundFeatures.Clone();
+
+            // Update adaptive background model
+            if(mPossibleObjectKeypoints != null)
+            {
+                for (int i = 0; i <  mPossibleObjectKeypoints.Count; i++)
+                {
+                    MKeyPoint keypt = mPossibleObjectKeypoints[i];
+                    Matrix<float> feature = mPossibleObjectFeatures.GetRow(i);
+
+                    // Add all keypoints not in the estimated ROI to the adaptive background model
+                    if (!newBB.Contains(keypt.Point))
+                    {
+                        mAdaptiveBackgroundKeypoints.Add(keypt);
+
+                        if (mAdaptiveBackgroundFeatures == null || mAdaptiveBackgroundFeatures.Rows == 0)
+                        {
+                            mAdaptiveBackgroundFeatures = feature;
+                        }
+                        else
+                        {
+                            mAdaptiveBackgroundFeatures = mAdaptiveBackgroundFeatures.ConcateVertical(feature);
+                        }
+                    }
+                }
+            }
+
+            if (mAdaptiveBackgroundKeypoints.Count > 0)
+            {
+                num_bgnd_model_keypoints = mAdaptiveBackgroundKeypoints.Count;
+                mAdaptiveBackgroundModel = true;
+                mAdaptiveSurfBackgroundMatcher = null;
+                mAdaptiveSurfBackgroundMatcher = new BruteForceMatcher<float>(DistanceType.L2);
+                mAdaptiveSurfBackgroundMatcher.Add(mAdaptiveBackgroundFeatures);
+            }
+        }
         #endregion
 
         #region Static Methods
-        ///// <summary>
-        ///// Function to determine whether a point falls within the given bounding box.
-        ///// </summary>
-        ///// <param name="rect">The rectangle which defines the bounding box.</param>
-        ///// <param name="pt">The point to be tested.</param>
-        ///// <returns>True if the point lies inside the bounding box. False, otherwise.</returns>
-        //public bool InRect(RectangleF rect, PointF pt)
-        //{
-        //    bool C1 = pt.X > rect.Left;
-        //    bool C2 = pt.Y > rect.Top;
-        //    bool C3 = pt.X < rect.Right;
-        //    bool C4 = pt.Y < rect.Bottom;
-        
-        //    return C1 & C2 & C3 & C4;
-        //}
-
         /// <summary>
         /// Computes the angle, in radians, between two points, using the origin as a common vertex.
         /// </summary>
@@ -1513,7 +1852,7 @@ namespace CMT_Tracker
             float angle = (float)Math.Atan2(v.Y, v.X);
             return angle;
         }
-        
+
         /// <summary>
         /// Bounds an angle, in radians, to be between +/- PI
         /// </summary>
@@ -1525,7 +1864,7 @@ namespace CMT_Tracker
             deltaA = (float)(deltaA < -Math.PI ? deltaA + (2 * Math.PI) : deltaA);
             return deltaA;
         }
-        
+
         /// <summary>
         /// Computes the L2-norm distance between two points.
         /// </summary>
@@ -1536,8 +1875,9 @@ namespace CMT_Tracker
         {
             double delta1 = p2.X - p1.X;
             double delta2 = p2.Y - p1.Y;
-            double d12 = Math.Pow(delta1, 2);
-            double d22 = Math.Pow(delta2, 2);
+            double d12 = delta1 * delta1;
+            double d22 = delta2 * delta2;
+            //float dist = FastSqrt.Sqrt2((float)(d12 + d22));
             float dist = (float)Math.Sqrt(d12 + d22);
             return dist;
         }
@@ -1556,7 +1896,7 @@ namespace CMT_Tracker
             {
                 rotatedPt = pt;
             }
-            else 
+            else
             {
                 float s = (float)Math.Sin(radians);
                 float c = (float)Math.Cos(radians);
@@ -1624,7 +1964,7 @@ namespace CMT_Tracker
                                orderby entry.value, entry.index
                                select entry.index;
                 indices.AddRange(tieOrder.ToArray());
-                
+
             }
             else
             {
@@ -1661,7 +2001,7 @@ namespace CMT_Tracker
         private static List<T> ReorderList<T>(List<T> source, List<int> order)
         {
             List<T> newList = new List<T>();
-            for(int i = 0;i < order.Count;i ++)
+            for (int i = 0; i < order.Count; i++)
             {
                 newList.Add(source[order[i]]);
             }
@@ -1699,5 +2039,57 @@ namespace CMT_Tracker
             return rect;
         }
         #endregion
+
+        private void VisualizeMatches(List<Tuple<PointF, PointF>> match_points, Image<Gray, Byte> img1, Image<Gray, Byte> img2, string saveOption)
+        {
+            Image<Gray, Byte> img1_clone = img1.Clone();
+            Image<Gray, Byte> img2_clone = img2.Clone();
+            Image<Gray, Byte> displayImage = img1_clone.ConcateHorizontal(img2_clone);
+
+            foreach (Tuple<PointF, PointF> m in match_points)
+            {
+                PointF pt2 = new PointF(m.Item2.X + img1_clone.Width, m.Item2.Y);
+                displayImage.Draw(new LineSegment2DF(m.Item1, pt2), new Gray(255), 1);
+            }
+
+            //string image_path = string.Format("C:\\Users\\jss5451\\Desktop\\CMT_matches\\{0}.jpg", frame_count++.ToString("00000000"));
+            string image_path = string.Format("C:\\Users\\Josh\\Desktop\\CMT_matches\\{0}\\{1}.jpg", saveOption, frame_count.ToString("00000000"));
+            displayImage.Save(image_path);
+
+            if(saveOption == "object_matches")
+            {
+                frame_count++;
+            }
+        }
+
+        private float VarianceDistance(PointF center, RectangleF roi)
+        {
+            float[] c_distances = new float[4];
+            c_distances[0] = L2Norm(center, new PointF(roi.Left, roi.Top));
+            c_distances[1] = L2Norm(center, new PointF(roi.Right, roi.Top));
+            c_distances[2] = L2Norm(center, new PointF(roi.Right, roi.Bottom));
+            c_distances[3] = L2Norm(center, new PointF(roi.Left, roi.Bottom));
+
+            float max_dist = c_distances[0];
+            for (int i = 1; i < 4; i++)
+            {
+                if (c_distances[i] > max_dist)
+                {
+                    max_dist = c_distances[i];
+                }
+            }
+            return max_dist;
+        }
+
+        
+
+        private float GaussianDistFunction(float distance)
+        {
+            //float dist_sub_mean = distance - mMeanDistance;
+            float dist_sqr = distance * distance;
+            float exp_value = (-dist_sqr / (2 * mVarianceDistance));
+
+            return (float)Math.Exp(exp_value);
+        }
     }
 }

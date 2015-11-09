@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -122,9 +123,12 @@ namespace Clustering
         /// <returns>The distance between the centers of the two clusters.</returns>
         public static float DistanceBetween(PointCluster<labelType> c1, PointCluster<labelType> c2)
         {
-            float deltaX2 = (float)Math.Pow(c1.Center.X - c2.Center.X, 2);
-            float deltaY2 = (float)Math.Pow(c1.Center.Y - c2.Center.Y, 2);
+            float deltaX2 = c1.Center.X - c2.Center.X;
+            deltaX2 *= deltaX2;
+            float deltaY2 = c1.Center.Y - c2.Center.Y;
+            deltaY2 *= deltaY2;
             float dist = (float)Math.Sqrt(deltaX2 + deltaY2);
+            //float dist = FastSqrt.Sqrt(deltaX2 + deltaY2);
             return dist;
         }
     }
