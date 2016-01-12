@@ -53,13 +53,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Emgu.CV">
-      <HintPath>..\..\..\..\..\..\..\Emgu\emgucv-windows-universal 2.9\bin\Emgu.CV.dll</HintPath>
+      <HintPath>..\..\..\..\ThirdEyeVI\ThirdEyeVI\WristbandCsharp\bin\Emgu.CV.dll</HintPath>
     </Reference>
     <Reference Include="Emgu.CV.UI">
-      <HintPath>..\..\..\..\..\..\..\Emgu\emgucv-windows-universal 2.9\bin\Emgu.CV.UI.dll</HintPath>
+      <HintPath>..\..\..\..\ThirdEyeVI\ThirdEyeVI\WristbandCsharp\bin\Emgu.CV.UI.dll</HintPath>
     </Reference>
     <Reference Include="Emgu.Util">
-      <HintPath>..\..\..\..\..\..\..\Emgu\emgucv-windows-universal 2.9\bin\Emgu.Util.dll</HintPath>
+      <HintPath>..\..\..\..\ThirdEyeVI\ThirdEyeVI\WristbandCsharp\bin\Emgu.Util.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
