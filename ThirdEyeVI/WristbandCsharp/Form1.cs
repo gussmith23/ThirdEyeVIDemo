@@ -59,10 +59,10 @@ namespace WristbandCsharp
         int stream_width = 640, stream_height = 480;
         
         // Getting commands from cart
-        bool connect_to_cart = true;
+        //bool connect_to_cart = false;
         ConnectionControllerClient cart_connection;
-        string cart_addr = "192.168.82.118";
-        int cart_port = 2275;
+        string cart_addr = "";
+        int cart_port = -1;
 
         // Show from cam handler.
         EventHandler ShowFromCamHandler;   
@@ -96,17 +96,6 @@ namespace WristbandCsharp
 
             #region setup decoder
             initFrameConverter(stream_width, stream_height);
-            #endregion
-
-            #region setup cart connection
-            if (connect_to_cart)
-            {
-                cart_connection = new ConnectionControllerClient();
-                cart_connection.configureConnection(CAPIStreamClient.ConnectionType.TCP, cart_addr, cart_port);
-
-
-                listenForPacket();
-            }
             #endregion
 
             // Combo box 1
@@ -689,6 +678,29 @@ namespace WristbandCsharp
             {
                 Application.Idle -= ShowFromCamHandler;
             }
+        }
+
+        private void groupBox4_Enter(object sender, EventArgs e)
+        {
+
+        }
+
+        /**
+         * Connect to cart
+         */
+        private void button8_Click_1(object sender, EventArgs e)
+        {
+            #region setup cart connection
+
+            cart_addr = textBox1.Text;
+            cart_port = Int32.Parse(textBox2.Text);
+            
+            cart_connection = new ConnectionControllerClient();
+            cart_connection.configureConnection(CAPIStreamClient.ConnectionType.TCP, cart_addr, cart_port);
+
+            listenForPacket();
+            
+            #endregion
         }
 
     }

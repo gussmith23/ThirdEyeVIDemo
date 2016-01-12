@@ -52,17 +52,20 @@
             this.label1 = new System.Windows.Forms.Label();
             this.button3 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
-            this.button8 = new System.Windows.Forms.Button();
-            this.button9 = new System.Windows.Forms.Button();
-            this.button10 = new System.Windows.Forms.Button();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.radioButton5 = new System.Windows.Forms.RadioButton();
             this.radioButton4 = new System.Windows.Forms.RadioButton();
             this.checkBox4 = new System.Windows.Forms.CheckBox();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.button8 = new System.Windows.Forms.Button();
+            this.label6 = new System.Windows.Forms.Label();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.textBox2 = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
+            this.groupBox4.SuspendLayout();
             this.SuspendLayout();
             // 
             // pictureBox1
@@ -136,10 +139,10 @@
             // button4
             // 
             this.button4.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.button4.Location = new System.Drawing.Point(97, 80);
+            this.button4.Location = new System.Drawing.Point(101, 80);
             this.button4.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(111, 28);
+            this.button4.Size = new System.Drawing.Size(118, 28);
             this.button4.TabIndex = 11;
             this.button4.Text = "Disconnect";
             this.button4.UseVisualStyleBackColor = true;
@@ -151,7 +154,7 @@
             this.button5.Location = new System.Drawing.Point(6, 80);
             this.button5.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(85, 28);
+            this.button5.Size = new System.Drawing.Size(92, 28);
             this.button5.TabIndex = 10;
             this.button5.Text = "Connect";
             this.button5.UseVisualStyleBackColor = true;
@@ -325,7 +328,7 @@
             // 
             this.button3.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button3.BackgroundImage")));
             this.button3.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.button3.Location = new System.Drawing.Point(468, 907);
+            this.button3.Location = new System.Drawing.Point(1035, 907);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(185, 303);
             this.button3.TabIndex = 4;
@@ -336,45 +339,12 @@
             // 
             this.button7.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button7.BackgroundImage")));
             this.button7.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.button7.Location = new System.Drawing.Point(659, 907);
+            this.button7.Location = new System.Drawing.Point(1226, 907);
             this.button7.Name = "button7";
             this.button7.Size = new System.Drawing.Size(185, 303);
             this.button7.TabIndex = 4;
             this.button7.UseVisualStyleBackColor = true;
             this.button7.Click += new System.EventHandler(this.button7_Click);
-            // 
-            // button8
-            // 
-            this.button8.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button8.BackgroundImage")));
-            this.button8.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.button8.Location = new System.Drawing.Point(850, 907);
-            this.button8.Name = "button8";
-            this.button8.Size = new System.Drawing.Size(185, 303);
-            this.button8.TabIndex = 4;
-            this.button8.UseVisualStyleBackColor = true;
-            this.button8.Click += new System.EventHandler(this.button8_Click);
-            // 
-            // button9
-            // 
-            this.button9.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button9.BackgroundImage")));
-            this.button9.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.button9.Location = new System.Drawing.Point(1041, 908);
-            this.button9.Name = "button9";
-            this.button9.Size = new System.Drawing.Size(185, 303);
-            this.button9.TabIndex = 4;
-            this.button9.UseVisualStyleBackColor = true;
-            this.button9.Click += new System.EventHandler(this.button9_Click);
-            // 
-            // button10
-            // 
-            this.button10.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button10.BackgroundImage")));
-            this.button10.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.button10.Location = new System.Drawing.Point(1232, 908);
-            this.button10.Name = "button10";
-            this.button10.Size = new System.Drawing.Size(185, 303);
-            this.button10.TabIndex = 4;
-            this.button10.UseVisualStyleBackColor = true;
-            this.button10.Click += new System.EventHandler(this.button10_Click);
             // 
             // groupBox3
             // 
@@ -423,16 +393,65 @@
             this.checkBox4.UseVisualStyleBackColor = true;
             this.checkBox4.CheckedChanged += new System.EventHandler(this.checkBox4_CheckedChanged);
             // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.textBox2);
+            this.groupBox4.Controls.Add(this.button8);
+            this.groupBox4.Controls.Add(this.label6);
+            this.groupBox4.Controls.Add(this.textBox1);
+            this.groupBox4.Location = new System.Drawing.Point(474, 908);
+            this.groupBox4.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Padding = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.groupBox4.Size = new System.Drawing.Size(225, 121);
+            this.groupBox4.TabIndex = 14;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Cart Connection";
+            this.groupBox4.Enter += new System.EventHandler(this.groupBox4_Enter);
+            // 
+            // button8
+            // 
+            this.button8.ImageAlign = System.Drawing.ContentAlignment.BottomRight;
+            this.button8.Location = new System.Drawing.Point(6, 78);
+            this.button8.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.button8.Name = "button8";
+            this.button8.Size = new System.Drawing.Size(90, 28);
+            this.button8.TabIndex = 14;
+            this.button8.Text = "Connect";
+            this.button8.UseVisualStyleBackColor = true;
+            this.button8.Click += new System.EventHandler(this.button8_Click_1);
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(6, 20);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(176, 20);
+            this.label6.TabIndex = 14;
+            this.label6.Text = "Cart Address and Port";
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(6, 45);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(118, 26);
+            this.textBox1.TabIndex = 0;
+            // 
+            // textBox2
+            // 
+            this.textBox2.Location = new System.Drawing.Point(130, 45);
+            this.textBox2.Name = "textBox2";
+            this.textBox2.Size = new System.Drawing.Size(77, 26);
+            this.textBox2.TabIndex = 15;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1418, 1388);
+            this.Controls.Add(this.groupBox4);
             this.Controls.Add(this.checkBox4);
             this.Controls.Add(this.groupBox3);
-            this.Controls.Add(this.button10);
-            this.Controls.Add(this.button9);
-            this.Controls.Add(this.button8);
             this.Controls.Add(this.button7);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.groupBox2);
@@ -451,6 +470,8 @@
             this.groupBox2.PerformLayout();
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
+            this.groupBox4.ResumeLayout(false);
+            this.groupBox4.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -481,13 +502,15 @@
         private System.Windows.Forms.RadioButton radioButton3;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Button button7;
-        private System.Windows.Forms.Button button8;
-        private System.Windows.Forms.Button button9;
-        private System.Windows.Forms.Button button10;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.RadioButton radioButton5;
         private System.Windows.Forms.RadioButton radioButton4;
         private System.Windows.Forms.CheckBox checkBox4;
+        private System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.Button button8;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox textBox2;
 
     }
 }
