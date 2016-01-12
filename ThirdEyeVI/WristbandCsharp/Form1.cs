@@ -67,6 +67,9 @@ namespace WristbandCsharp
         // Show from cam handler.
         EventHandler ShowFromCamHandler;   
 
+        /**
+         * These functons are used to listen for incoming cart connections.
+         */
         public void listenForPacket(){
             (new Thread(listenThreadLogic)).Start();
         }
@@ -87,7 +90,7 @@ namespace WristbandCsharp
 
             InitializeComponent();
 
-            #region Setup server
+            #region setup server to wait for glove connection
             ServerController server = new ServerController();
             //for every delegate you want to functino
             server.registerDelegate(CAPIStreamCommon.PacketType.VIDEO_FRAME, new ImageWork(doWorkOnData));
@@ -98,7 +101,7 @@ namespace WristbandCsharp
             initFrameConverter(stream_width, stream_height);
             #endregion
 
-            // Combo box 1
+            #region combo box 1
             itemsAvailableForLocation = new List<string>();
             string[] itemNames = Directory.GetFiles("itemsToTrack/", "*.jpg");
             foreach (string s in itemNames)
@@ -110,11 +113,13 @@ namespace WristbandCsharp
             }
             comboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBox1.SelectedIndex = 0;
+            #endregion
 
-            // Combo box 2
+            #region combo box 2
             RefreshSerialPortList();
             comboBox2.DropDownStyle = ComboBoxStyle.DropDownList;
             //comboBox2.SelectedIndex = 0;
+            #endregion
 
             // Haptic feedback starts disabled
             checkBox1.Enabled = false;
