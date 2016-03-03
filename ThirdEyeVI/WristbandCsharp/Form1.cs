@@ -25,6 +25,8 @@ namespace WristbandCsharp
     public partial class Form1 : Form
     {
 
+        #region DLL imports for Peter's color conversion functions.
+
         [DllImport(@"ffmpeg_export.dll")]
         private static extern IntPtr convertYUVtoRGB(IntPtr yuv_data, int width, int height);
 
@@ -34,8 +36,9 @@ namespace WristbandCsharp
         [DllImport(@"ffmpeg_export.dll")]
         private static extern void deinitFrameConverter();
 
+        #endregion
+
         int camera = 0;
-        
         Capture cap;
         Image<Bgr,Byte> image;
         CMTTracker cmtTracker = null;
@@ -65,7 +68,10 @@ namespace WristbandCsharp
         int cart_port = -1;
 
         // Show from cam handler.
-        EventHandler ShowFromCamHandler;   
+        EventHandler ShowFromCamHandler;
+
+
+        #region shopping cart network connection
 
         /**
          * These functons are used to listen for incoming cart connections.
@@ -84,6 +90,8 @@ namespace WristbandCsharp
                 }
             }
         }
+
+        #endregion
 
         public Form1()
         {
@@ -154,11 +162,20 @@ namespace WristbandCsharp
 
         }
 
+        /// <summary>
+        /// The function called when new data comes in from the CAPI network interface.
+        /// Color-converts the image frame, runs tracking on it, and then gives feedback
+        /// via all active feedback channels e.g. audio, glove vibrations, etc.
+        /// </summary>
+        /// <param name="d"></param>
+        /// <returns></returns>
         private byte[] doWorkOnData(CAPIStreamCommon.SocketData d)
         {
             Image<Bgr, Byte> return_image;
 
-            #region Convert to usable image + place in return_image.
+            #region Convert to usable image + place in return_image using Peter's DLLs.
+
+            // Contact Peter Zientara about this piece of code.
 
             if (d == null) return null;
 
@@ -182,9 +199,12 @@ namespace WristbandCsharp
         
             #endregion            
 
+            #region run tracking and give feedback
             if (cmtTracker != null)
             {
                 return_image = cmtTracker.Process(return_image);
+
+                // TODO we need to implement a feedback channel interface.
 
                 #region audio feedback
                 if (checkBox2.Checked)
@@ -217,17 +237,25 @@ namespace WristbandCsharp
                 #endregion
 
             }
+            #endregion
 
             pictureBox1.Image = return_image.ToBitmap();
 
             return null;
         }
 
+        /// <summary>
+        /// Handles commands coming from the cart regarding which item to track.
+        /// </summary>
+        /// <param name="d"></param>
         private void getItemToTrackViaNetwork(CAPIStreamCommon.SocketData d)
         {
             string item = System.Text.Encoding.ASCII.GetString(d.data);
-
+            
+            // This stuff was hardcoded for the 2015 demo; should be done differently 
+            //  in the future.
             cmtTracker = new CMTTracker("itemsToTrack/" + item + ".jpg");
+
         }
         
 
@@ -328,7 +356,8 @@ namespace WristbandCsharp
 
                 }
 
-                // Send to Arduino
+                #region haptic feedback (send to Arduino)
+
                 if (checkBox1.Checked)
                 {
                     try
@@ -346,10 +375,11 @@ namespace WristbandCsharp
                         DestroySerial();
                     }
                 }
-            
 
-            
-                // Speech
+                #endregion
+
+                #region audio feedback
+
                 if (checkBox2.Checked)
                 {
                     // Get direction to force in
@@ -378,6 +408,9 @@ namespace WristbandCsharp
                     }
                 }
 
+                #endregion
+
+                #region text feedback
                 if (checkBox3.Checked)
                 {
                     // Get direction to force in
@@ -403,6 +436,7 @@ namespace WristbandCsharp
                     }
 
                 }
+                #endregion
 
             }
             pictureBox1.Image = returnimage.ToBitmap();
@@ -690,9 +724,11 @@ namespace WristbandCsharp
 
         }
 
-        /**
-         * Connect to cart
-         */
+        /// <summary>
+        /// Connect to cart.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button8_Click_1(object sender, EventArgs e)
         {
             #region setup cart connection
