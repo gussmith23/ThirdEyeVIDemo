@@ -101,6 +101,14 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="itemsToTrack\Bran Flakes.jpg" />
+    <Content Include="itemsToTrack\Cheerios.jpg" />
+    <Content Include="itemsToTrack\Frosted Flakes.jpg" />
+    <Content Include="itemsToTrack\Fruit Loops.jpg" />
+    <Content Include="itemsToTrack\Ketchup.jpg" />
+    <Content Include="itemsToTrack\Mini Wheats.jpg" />
+    <Content Include="itemsToTrack\Progresso.jpg" />
+    <Content Include="itemsToTrack\Sriracha.jpg" />
     <Content Include="opencv_core249.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
