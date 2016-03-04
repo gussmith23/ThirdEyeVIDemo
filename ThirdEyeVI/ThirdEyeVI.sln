@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThirdEyeVIDemo", "WristbandCsharp\ThirdEyeVIDemo.csproj", "{CD5327FB-3B05-4D84-8A3E-C95A3228F3F7}"
 EndProject
@@ -16,13 +16,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CAPIStreamClient", "..\CAPIStreamClient\CAPIStreamClient.csproj", "{E2C96291-8AAB-4089-9F2A-03311107048B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CAPIStreamTest", "..\CAPIStreamTest\CAPIStreamTest.csproj", "{4DA31846-37CD-4E6B-AE28-A3FB9EBA68F7}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Referenced Assemblies", "Referenced Assemblies", "{8F0A2B47-DFE3-405C-B5D8-870B2B8BB2A9}"
-	ProjectSection(SolutionItems) = preProject
-		..\Referenced Assemblies\Emgu.CV.dll = ..\Referenced Assemblies\Emgu.CV.dll
-		..\Referenced Assemblies\Emgu.CV.UI.dll = ..\Referenced Assemblies\Emgu.CV.UI.dll
-		..\Referenced Assemblies\Emgu.Util.dll = ..\Referenced Assemblies\Emgu.Util.dll
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
