@@ -226,7 +226,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>XCOPY "$(SolutionDir)\itemsToTrack" "$(TargetDir)\itemsToTrack\" /E /Y
+    <PostBuildEvent>XCOPY "$(SolutionDir)\ThirdEyeVI\itemsToTrack" "$(TargetDir)\itemsToTrack\" /E /Y
 if $(PlatformName) == x64 (
 copy/b/y "$(ProjectDir)\EmguDLLs\*.dll" "$(TargetDir)"
 copy/b/y "$(ProjectDir)\x64DLLs\*.dll" "$(TargetDir)"
