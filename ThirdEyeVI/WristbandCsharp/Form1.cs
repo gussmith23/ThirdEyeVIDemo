@@ -47,6 +47,8 @@ namespace WristbandCsharp
 
         #endregion
 
+        #region declarations and initializations.
+
         int camera = 0;
         Capture cap;
         Image<Bgr,Byte> image;
@@ -79,6 +81,7 @@ namespace WristbandCsharp
         // Show from cam handler.
         EventHandler ShowFromCamHandler;
 
+        #endregion
 
         #region shopping cart network connection
 
