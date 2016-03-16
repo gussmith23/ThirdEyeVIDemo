@@ -108,8 +108,10 @@ namespace WristbandCsharp
         public Form1()
         {
 
+            #region visual-studio-inserted code (do not modify)
             // This is inserted by VS by default; do not move.
             InitializeComponent();
+            #endregion
 
             #region setup server to wait for glove connection
             ServerController server = new ServerController();
@@ -122,7 +124,7 @@ namespace WristbandCsharp
             initFrameConverter(stream_width, stream_height);
             #endregion
 
-            #region combo box 1
+            #region combo box 1 (available items to track)
             itemsAvailableForLocation = new List<string>();
             string[] itemNames = Directory.GetFiles("itemsToTrack/", "*.jpg");
             foreach (string s in itemNames)
@@ -136,21 +138,39 @@ namespace WristbandCsharp
             comboBox1.SelectedIndex = 0;
             #endregion
 
-            #region combo box 2
+            #region combo box 2 (serial ports for Arduino connection)
             RefreshSerialPortList();
             comboBox2.DropDownStyle = ComboBoxStyle.DropDownList;
             //comboBox2.SelectedIndex = 0;
             #endregion
 
+            #region check box 1 (haptic feedback)
             // Haptic feedback starts disabled
             checkBox1.Enabled = false;
+            #endregion
 
-
+            #region picture box 
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            #endregion
 
+            #region initialize Capture object 
+
+            /**
+             * TODO this shouldn't be done here, as the capture can be initialized in a number 
+             * of ways in the future.
+             * There should be menus with options for initializing capture (from webcam, from
+             * file, from streaming) and then once the needed information (e.g. camera number,
+             * filename, or ip/port) is input and validated, only THEN will the capture be 
+             * created.
+             */
+          
+
+            // TODO this shouldn't be hardcoded
             cap = new Capture(camera);
             
             
+            // Set camera resolution; the larger res, the slower the processing.
+            // TODO this shouldn't be hardcoded either, but it's not a big deal for now.
             // 896x504
             //cap.SetCaptureProperty(Emgu.CV.CvEnum.CAP_PROP.CV_CAP_PROP_FRAME_HEIGHT, 504.0);
             //cap.SetCaptureProperty(Emgu.CV.CvEnum.CAP_PROP.CV_CAP_PROP_FRAME_WIDTH, 896.0);
@@ -169,22 +189,39 @@ namespace WristbandCsharp
             // 1920x1080
             cap.SetCaptureProperty(Emgu.CV.CvEnum.CAP_PROP.CV_CAP_PROP_FRAME_HEIGHT, 1080.0);
             cap.SetCaptureProperty(Emgu.CV.CvEnum.CAP_PROP.CV_CAP_PROP_FRAME_WIDTH, 1920.0);
-            
-            
-            ShowFromCamHandler = new EventHandler(ShowFromCam);
+            #endregion
 
+            #region create EventHandler 
+            
+            /**
+             * TODO we either need to make this handler work for ALL video input sources, 
+             * or make different handlers for different situations.
+             * Right now, handling from webcam uses this event handler, which gets attached
+             * to Application.Idle. However, handling from streaming doesn't use EventHandlers
+             * at all; everything happens in the doWorkOnData function. This needs to be changed.
+             */
+
+            ShowFromCamHandler = new EventHandler(ShowFromCam);
+            #endregion
         }
 
         /// <summary>
         /// The function called when new data comes in from the CAPI network interface.
         /// Color-converts the image frame, runs tracking on it, and then gives feedback
         /// via all active feedback channels e.g. audio, glove vibrations, etc.
+        /// 
+        /// This code was hacked together for the 2015 demo. In the future, frames coming
+        /// in over the network should be treated exactly the same as frames coming in
+        /// through the webcam; this will probably include rewriting this function so that
+        /// it simply converts 
         /// </summary>
         /// <param name="d"></param>
         /// <returns></returns>
         private byte[] doWorkOnData(CAPIStreamCommon.SocketData d)
         {
+            #region declarations
             Image<Bgr, Byte> return_image;
+            #endregion
 
             #region Convert to usable image + place in return_image using Peter's DLLs.
 
@@ -252,6 +289,7 @@ namespace WristbandCsharp
             }
             #endregion
 
+            // Remember: we have to actually update the window's picture!
             pictureBox1.Image = return_image.ToBitmap();
 
             return null;
@@ -293,7 +331,6 @@ namespace WristbandCsharp
                     break;
             }
         }
-
         private void initializeTrackerWithSettings(int trackType, string fileName)
         {
             initializeTrackerWithSettings(trackType, new Image<Bgr, Byte>(fileName));
