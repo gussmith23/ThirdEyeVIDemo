@@ -108,6 +108,7 @@ namespace WristbandCsharp
         public Form1()
         {
 
+            // This is inserted by VS by default; do not move.
             InitializeComponent();
 
             #region setup server to wait for glove connection
