@@ -27,6 +27,15 @@ namespace WristbandCsharp
 
         #region DLL imports for Peter's color conversion functions.
 
+        /**
+         * TODO there are problems here on different Windows platforms.
+         * I tried running this on Win10 and (using dependency walker) I discovered
+         * that needed Windows API dlls couldn't be found by ffmpeg_export.dll.
+         * Peter compiled this DLL (I think), and I think he did it on Win7 or 8.
+         * He may need to recompile, and a solution needs to be found to avoid this 
+         * in the future.
+         */
+
         [DllImport(@"ffmpeg_export.dll")]
         private static extern IntPtr convertYUVtoRGB(IntPtr yuv_data, int width, int height);
 
