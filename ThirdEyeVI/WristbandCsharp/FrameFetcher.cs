@@ -8,6 +8,7 @@ namespace WristbandCsharp
 {
     interface FrameFetcher
     {
+        int Init();
         int start();
         int pause();
         int stop();
