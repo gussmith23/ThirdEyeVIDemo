@@ -18,7 +18,7 @@ using System.Threading;
 using ObjectSpeechRecognizer;
 using CAPIStreamServer;
 using System.Runtime.InteropServices;
-using CAPIStreamClient;
+//using CAPIStreamClient;
 
 namespace WristbandCsharp
 {
@@ -74,7 +74,7 @@ namespace WristbandCsharp
         
         // Getting commands from cart
         //bool connect_to_cart = false;
-        ConnectionControllerClient cart_connection;
+        //ConnectionControllerClient cart_connection;
         string cart_addr = "";
         int cart_port = -1;
 
@@ -95,11 +95,11 @@ namespace WristbandCsharp
         {
             while (true)
             {
-                CAPIStreamCommon.SocketData s = cart_connection.ReceiveDataPacket(cart_connection.stream);
-                if (s != null && s.message_type == CAPIStreamCommon.PacketType.WORK_ACK)
-                {
-                    getItemToTrackViaNetwork(s);
-                }
+                //CAPIStreamCommon.SocketData s = cart_connection.ReceiveDataPacket(cart_connection.stream);
+                //if (s != null && s.message_type == CAPIStreamCommon.PacketType.WORK_ACK)
+                //{
+                //    getItemToTrackViaNetwork(s);
+                //}
             }
         }
 
@@ -114,10 +114,10 @@ namespace WristbandCsharp
             #endregion
 
             #region setup server to wait for glove connection
-            ServerController server = new ServerController();
-            //for every delegate you want to functino
-            server.registerDelegate(CAPIStreamCommon.PacketType.VIDEO_FRAME, new ImageWork(doWorkOnData));
-            server.startServer(CAPIStreamServer.ConnectionType.TCP);
+            //ServerController server = new ServerController();
+            ////for every delegate you want to functino
+            //server.registerDelegate(CAPIStreamCommon.PacketType.VIDEO_FRAME, new ImageWork(doWorkOnData));
+            //server.startServer(CAPIStreamServer.ConnectionType.TCP);
             #endregion
 
             #region setup decoder
@@ -217,97 +217,97 @@ namespace WristbandCsharp
         /// </summary>
         /// <param name="d"></param>
         /// <returns></returns>
-        private byte[] doWorkOnData(CAPIStreamCommon.SocketData d)
-        {
-            #region declarations
-            Image<Bgr, Byte> return_image;
-            #endregion
+        //private byte[] doWorkOnData(CAPIStreamCommon.SocketData d)
+        //{
+        //    #region declarations
+        //    Image<Bgr, Byte> return_image;
+        //    #endregion
 
-            #region Convert to usable image + place in return_image using Peter's DLLs.
+        //    #region Convert to usable image + place in return_image using Peter's DLLs.
 
-            // Contact Peter Zientara about this piece of code.
+        //    // Contact Peter Zientara about this piece of code.
 
-            if (d == null) return null;
+        //    if (d == null) return null;
 
-            int size = stream_width * stream_height * 3;
-            byte[] rgb_data = new byte[size];
-            unsafe
-            {
-                IntPtr byteArray = Marshal.AllocHGlobal(d.data.Length);
-                Marshal.Copy(d.data, 0, byteArray, d.data.Length);
-                IntPtr rgb_data_ptr;
-                rgb_data_ptr = convertYUVtoRGB(byteArray, stream_width, stream_height);
-                Marshal.FreeHGlobal(byteArray);
-                Marshal.Copy(rgb_data_ptr, rgb_data, 0, size);
-            }
-            Image<Bgr, Byte> converted_image = new Image<Bgr, Byte>(stream_width, stream_height);
-            Buffer.BlockCopy(rgb_data, 0, converted_image.Data, 0, size);
-            //CvInvoke.cvShowImage("frame", image);
-            //CvInvoke.cvWaitKey(1);
+        //    int size = stream_width * stream_height * 3;
+        //    byte[] rgb_data = new byte[size];
+        //    unsafe
+        //    {
+        //        IntPtr byteArray = Marshal.AllocHGlobal(d.data.Length);
+        //        Marshal.Copy(d.data, 0, byteArray, d.data.Length);
+        //        IntPtr rgb_data_ptr;
+        //        rgb_data_ptr = convertYUVtoRGB(byteArray, stream_width, stream_height);
+        //        Marshal.FreeHGlobal(byteArray);
+        //        Marshal.Copy(rgb_data_ptr, rgb_data, 0, size);
+        //    }
+        //    Image<Bgr, Byte> converted_image = new Image<Bgr, Byte>(stream_width, stream_height);
+        //    Buffer.BlockCopy(rgb_data, 0, converted_image.Data, 0, size);
+        //    //CvInvoke.cvShowImage("frame", image);
+        //    //CvInvoke.cvWaitKey(1);
 
-            return_image = converted_image;
+        //    return_image = converted_image;
         
-            #endregion            
+        //    #endregion            
 
-            #region run tracking and give feedback
-            if (cmtTracker != null)
-            {
-                return_image = cmtTracker.Process(return_image);
+        //    #region run tracking and give feedback
+        //    if (cmtTracker != null)
+        //    {
+        //        return_image = cmtTracker.Process(return_image);
 
-                // TODO we need to implement a feedback channel interface.
+        //        // TODO we need to implement a feedback channel interface.
 
-                #region audio feedback
-                if (checkBox2.Checked)
-                {
-                    // Get direction to force in
-                    int direction = CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(stream_width / 2, stream_height / 2));
+        //        #region audio feedback
+        //        if (checkBox2.Checked)
+        //        {
+        //            // Get direction to force in
+        //            int direction = CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(stream_width / 2, stream_height / 2));
 
-                    switch (direction)
-                    {
-                        case 0:
-                            speechWorker.setDirection("left");
-                            break;
-                        case 1:
-                            speechWorker.setDirection("down");
-                            break;
-                        case 2:
-                            speechWorker.setDirection("right");
-                            break;
-                        case 3:
-                            speechWorker.setDirection("up");
-                            break;
-                        case -1:
-                            speechWorker.setDirection("");
-                            break;
-                        case 5:
-                            speechWorker.setDirection("forward");
-                            break;
-                    }
-                }
-                #endregion
+        //            switch (direction)
+        //            {
+        //                case 0:
+        //                    speechWorker.setDirection("left");
+        //                    break;
+        //                case 1:
+        //                    speechWorker.setDirection("down");
+        //                    break;
+        //                case 2:
+        //                    speechWorker.setDirection("right");
+        //                    break;
+        //                case 3:
+        //                    speechWorker.setDirection("up");
+        //                    break;
+        //                case -1:
+        //                    speechWorker.setDirection("");
+        //                    break;
+        //                case 5:
+        //                    speechWorker.setDirection("forward");
+        //                    break;
+        //            }
+        //        }
+        //        #endregion
 
-            }
-            #endregion
+        //    }
+        //    #endregion
 
-            // Remember: we have to actually update the window's picture!
-            pictureBox1.Image = return_image.ToBitmap();
+        //    // Remember: we have to actually update the window's picture!
+        //    pictureBox1.Image = return_image.ToBitmap();
 
-            return null;
-        }
+        //    return null;
+        //}
 
         /// <summary>
         /// Handles commands coming from the cart regarding which item to track.
         /// </summary>
         /// <param name="d"></param>
-        private void getItemToTrackViaNetwork(CAPIStreamCommon.SocketData d)
-        {
-            string item = System.Text.Encoding.ASCII.GetString(d.data);
+        //private void getItemToTrackViaNetwork(CAPIStreamCommon.SocketData d)
+        //{
+        //    string item = System.Text.Encoding.ASCII.GetString(d.data);
             
-            // This stuff was hardcoded for the 2015 demo; should be done differently 
-            //  in the future.
-            cmtTracker = new CMTTracker("itemsToTrack/" + item + ".jpg");
+        //    // This stuff was hardcoded for the 2015 demo; should be done differently 
+        //    //  in the future.
+        //    cmtTracker = new CMTTracker("itemsToTrack/" + item + ".jpg");
 
-        }
+        //}
         
 
         /// <summary>
@@ -783,13 +783,13 @@ namespace WristbandCsharp
         {
             #region setup cart connection
 
-            cart_addr = textBox1.Text;
-            cart_port = Int32.Parse(textBox2.Text);
+            //cart_addr = textBox1.Text;
+            //cart_port = Int32.Parse(textBox2.Text);
             
-            cart_connection = new ConnectionControllerClient();
-            cart_connection.configureConnection(CAPIStreamClient.ConnectionType.TCP, cart_addr, cart_port);
+            //cart_connection = new ConnectionControllerClient();
+            //cart_connection.configureConnection(CAPIStreamClient.ConnectionType.TCP, cart_addr, cart_port);
 
-            listenForPacket();
+            //listenForPacket();
             
             #endregion
         }
