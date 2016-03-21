@@ -64,7 +64,7 @@ namespace CAPIStreamCommon
     {
         TimeoutWrapper t;
         // Gus changed this
-        public H264_Nal_Packet p { get { return p; } }
+        public H264_Nal_Packet p { get { return p; } set { p = value; } }
         public H264_TimeoutFrame(int timeout, int numberOfSegments, int segmentNumber, byte[] data, removeNal callback, int nalNumber)
         {
             t = new TimeoutWrapper(timeout, nalNumber, callback);
