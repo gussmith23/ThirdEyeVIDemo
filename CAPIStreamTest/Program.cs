@@ -34,7 +34,7 @@ namespace CAPIStreamTest
             //System.Console.WriteLine("{0}", img_data.Length);
             client = new ConnectionControllerClient();
             client.configureConnection(ConnectionType.TCP, "localhost", 2275); //PORT CAPI SPELLED IN PHONE DIALER
-            SocketData recData = client.receiveData(); //recieve header packet
+            SocketData recData = client.receiveDataPacket(); //recieve header packet
             if (recData == null)
             {
                 System.Console.WriteLine("good!");

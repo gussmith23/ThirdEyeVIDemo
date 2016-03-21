@@ -1,22 +1,20 @@
 ﻿using System;
 using System.Net.Sockets;
+using System.Threading;
 using CAPIStreamCommon;
-
-
+using System.Collections.Generic;
 
 namespace CAPIStreamClient
 {
-    public enum ConnectionType
-    {
-        UDP = 0,
-        TCP = 1
-    };
+    public delegate SocketData PacketProcess(SocketData s);
+
     public class ConnectionControllerClient
     {
+        Dictionary<PacketType, PacketProcess> delegateFunctions = new Dictionary<PacketType, PacketProcess>();
         private Boolean isConnected = false;
         private TcpClient tcpClient;
         private Boolean configured = false;
-        public NetworkStream stream;
+        private NetworkStream stream;
         private Boolean shutdown = false;
         private uint clientId = 0;
         public ConnectionControllerClient() { }
@@ -48,47 +46,64 @@ namespace CAPIStreamClient
         }
         public void Shutdown()
         {
-            stream.Close();
-            tcpClient.Close();
+            if(stream != null)
+            {
+                stream.Close();
+            }
+            if(tcpClient != null)
+            {
+                tcpClient.Close();
+            }
         }
-        public SocketData receiveData() {
+        public Boolean isConfigured()
+        {
+            return configured;
+        }
+        public SocketData receiveDataPacket() {
             SocketData data;
             data = ReceiveDataPacket(stream);
-            switch (data.message_type)
+            if(data != null)
             {
-                case PacketType.ROI_FRAME_INFO:
-                    {
-                        return data;
-                    }
-                case PacketType.CONNECTION_DISCONNECT:
-                    {
-                        Console.WriteLine("Connection Disconnected");
-                        shutdown = true;
-                        return null;
-                    }
-                case PacketType.CONNECTION_ACCEPT:
-                    {
-                        this.clientId = data.stream_id; //set client id
-                        Console.WriteLine("Connection Accepted, Client ID: {0}", this.clientId);
-                        shutdown = false;
-                        return null;
-                    }
-                case PacketType.KEYPOINTS:
-                    {
-                        Console.WriteLine("Recvied Keypoints -- Length: {0}", data.message_length);
-                        return data;
-                        break;
-                    }
-                case PacketType.KEYPOINT_MATCHES:
-                    {
-                        Console.WriteLine("Recvied Keypoints -- Length: {0}", data.message_length);
-                        return data;
-                        break;
-                    }
-                default:
-                    {
-                        return null;
-                    }
+                switch (data.message_type)
+                {
+                    case PacketType.ROI_FRAME_INFO:
+                        {
+                            return data;
+                        }
+                    case PacketType.CONNECTION_DISCONNECT:
+                        {
+                            Console.WriteLine("Connection Disconnected");
+                            shutdown = true;
+                            return null;
+                        }
+                    case PacketType.CONNECTION_ACCEPT:
+                        {
+                            this.clientId = data.stream_id; //set client id
+                            Console.WriteLine("Connection Accepted, Client ID: {0}", this.clientId);
+                            shutdown = false;
+                            return data;
+                        }
+                    case PacketType.KEYPOINTS:
+                        {
+                            Console.WriteLine("Recvied Keypoints -- Length: {0}", data.message_length);
+                            return data;
+                            break;
+                        }
+                    case PacketType.KEYPOINT_MATCHES:
+                        {
+                            Console.WriteLine("Recvied Keypoints -- Length: {0}", data.message_length);
+                            return data;
+                            break;
+                        }
+                    default:
+                        {
+                            return data;
+                        }
+                }
+            }
+            else
+            {
+                return null;
             }
         }
         public void sendDataPacket(SocketData data)
@@ -96,16 +111,24 @@ namespace CAPIStreamClient
             data.stream_id = clientId; //append clientID; 
             sendData(data.toByteArray());
         }
-        public SocketData ReceiveDataPacket(NetworkStream stream)
+        private SocketData ReceiveDataPacket(NetworkStream stream)
         {
             byte[] header = readStream(stream, (UInt32)SocketData.getHeaderSize());
-            SocketData d = new SocketData(header);
-            if(d.message_length > 0)
+            if(header != null)
             {
-                byte[] body = readStream(stream, d.message_length);
-                d.data = body;
+                SocketData d = new SocketData(header);
+                if (d.message_length > 0)
+                {
+                    byte[] body = readStream(stream, d.message_length);
+                    d.data = body;
+                }
+                return d;
             }
-            return d;
+            else
+            {
+                Shutdown();
+                return null;
+            }
         }
         //wrapper for read stream to block untill expected number of bytes is returned
         private byte[] readStream(NetworkStream stream, UInt32 length)
@@ -138,6 +161,41 @@ namespace CAPIStreamClient
             else //stream closed
             {
                 Shutdown();
+            }
+        }
+
+        public void recieveDataPacketAsync()
+        {
+            Thread listenThread = new Thread(new ThreadStart(recievePacketAsync));
+            listenThread.Start();
+        }
+        private void recievePacketAsync()
+        {
+            SocketData pkt = receiveDataPacket();
+            socketDataDispatch(pkt);
+        }
+        private void socketDataDispatch(SocketData pkt)
+        {
+            SocketData returnPacket = null;
+            if (delegateFunctions.ContainsKey(pkt.message_type))
+            {
+                PacketProcess del = delegateFunctions[pkt.message_type];
+                returnPacket = del(pkt);
+            }
+            if (returnPacket != null)
+            {
+                sendDataPacket(returnPacket);
+            }
+         }
+        public void registerDelegate(PacketType type, PacketProcess func)
+        {
+            if (delegateFunctions.ContainsKey(type))
+            {
+                delegateFunctions[type] = func;
+            }
+            else
+            {
+                delegateFunctions.Add(type, func);
             }
         }
     }

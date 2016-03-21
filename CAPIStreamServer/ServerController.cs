@@ -11,11 +11,6 @@ using System.Threading;
 using CAPIStreamCommon;
 namespace CAPIStreamServer
 {
-    public enum ConnectionType
-    {
-        UDP = 0,
-        TCP = 1
-    };
     public class ServerController
     {
         Dictionary<PacketType, ImageWork> delegateFunctions = new Dictionary<PacketType, ImageWork>();
