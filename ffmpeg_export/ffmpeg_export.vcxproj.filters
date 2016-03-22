@@ -38,13 +38,13 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="x64\Debug\avcodec.lib" />
-    <Library Include="x64\Debug\avdevice.lib" />
-    <Library Include="x64\Debug\avfilter.lib" />
-    <Library Include="x64\Debug\avformat.lib" />
-    <Library Include="x64\Debug\avutil.lib" />
-    <Library Include="x64\Debug\postproc.lib" />
-    <Library Include="x64\Debug\swresample.lib" />
-    <Library Include="x64\Debug\swscale.lib" />
+    <Library Include="avcodec.lib" />
+    <Library Include="avdevice.lib" />
+    <Library Include="avfilter.lib" />
+    <Library Include="avformat.lib" />
+    <Library Include="avutil.lib" />
+    <Library Include="postproc.lib" />
+    <Library Include="swresample.lib" />
+    <Library Include="swscale.lib" />
   </ItemGroup>
 </Project>

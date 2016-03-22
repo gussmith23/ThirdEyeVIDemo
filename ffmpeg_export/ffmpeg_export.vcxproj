@@ -30,7 +30,7 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <CLRSupport>true</CLRSupport>
+    <CLRSupport>false</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -90,12 +90,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>C:\Users\Peter A. Zientara\Desktop\ffmpeg-20151117-git-e9aea6d-win64-dev\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\ffmpeg\include;C:\Users\Peter A. Zientara\Desktop\ffmpeg-20151117-git-e9aea6d-win64-dev\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAsManaged>false</CompileAsManaged>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies />
+      <AdditionalDependencies>avdevice.lib;avcodec.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -103,14 +104,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\ffmpeg\ffmpeg-20151117-git-e9aea6d-win64-dev\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\ffmpeg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAsManaged>false</CompileAsManaged>
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\ffmpeg\ffmpeg-20151117-git-e9aea6d-win64-shared\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\ffmpeg\lib;C:\ffmpeg\ffmpeg-20151117-git-e9aea6d-win64-shared\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -144,7 +145,9 @@
     <ClInclude Include="ffmpeg_h264_decoder.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ffmpeg_h264_decoder.c" />
+    <ClCompile Include="ffmpeg_h264_decoder.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -156,14 +159,14 @@
     <Image Include="app.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="x64\Debug\avcodec.lib" />
-    <Library Include="x64\Debug\avdevice.lib" />
-    <Library Include="x64\Debug\avfilter.lib" />
-    <Library Include="x64\Debug\avformat.lib" />
-    <Library Include="x64\Debug\avutil.lib" />
-    <Library Include="x64\Debug\postproc.lib" />
-    <Library Include="x64\Debug\swresample.lib" />
-    <Library Include="x64\Debug\swscale.lib" />
+    <Library Include="avcodec.lib" />
+    <Library Include="avdevice.lib" />
+    <Library Include="avfilter.lib" />
+    <Library Include="avformat.lib" />
+    <Library Include="avutil.lib" />
+    <Library Include="postproc.lib" />
+    <Library Include="swresample.lib" />
+    <Library Include="swscale.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
