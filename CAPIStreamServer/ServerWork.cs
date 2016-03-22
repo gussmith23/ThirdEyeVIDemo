@@ -13,7 +13,7 @@ using Emgu.CV.CvEnum;
 namespace CAPIStreamServer
 {
 
-    public delegate byte[] ImageWork(SocketData s);
+    public delegate SocketData ImageWork(SocketData s);
     class ServerWork
     {
         string m_VideoCaptureFilename;
@@ -129,52 +129,17 @@ namespace CAPIStreamServer
                     doWork = false;
                     return;
                 }
-                byte[] retData = null;
                 //Delegate based calls
+                SocketData returnPacket = null;
                 if (workFunctions.ContainsKey(dataPacket.message_type))
                 {
                     ImageWork del = workFunctions[dataPacket.message_type];
-                    retData = del(dataPacket);
+                    returnPacket = del(dataPacket);
                 }
-                SocketData returnPacket = null;
-                if(retData != null)
+                if (returnPacket != null)
                 {
-                    switch (dataPacket.message_type)
-                    {
-                        case PacketType.VIDEO_FRAME:
-                            {
-                                returnPacket = new SocketData(PacketType.VIDEO_FRAME, clientID, 13, 14, (uint)retData.Length, retData);
-                                break;
-                            }
-                        case PacketType.MODEL_KEYPOINT_EXTRACT:
-                            {
-                                returnPacket = new SocketData(PacketType.KEYPOINTS, clientID, 13, 14, (uint)retData.Length, retData);
-                                break;
-                            }
-                        case PacketType.MODELS_DONE:
-                            {
-                                //models_finished();
-                                break;
-                            }
-                        case PacketType.CONNECTION_DISCONNECT:
-                            {
-                                //client_count--;
-                                //close(socketfd);
-                                doWork = false;
-                                break;
-                            }
-                        default:
-                            {
-                                //do nothing??
-                                break;
-                            }
-                    }
+                    CAPINetworkUtility.sendDataPacket(socket, returnPacket);
                 }
-                else
-                {
-                    returnPacket = new SocketData(PacketType.WORK_ACK, clientID, 43, 44, 0);
-                }
-                CAPINetworkUtility.sendDataPacket(socket, returnPacket);
             }
         }
         private void AcceptConnection(Socket socket)
