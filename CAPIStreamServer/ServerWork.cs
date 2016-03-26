@@ -6,13 +6,83 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Emgu.CV;
+using Emgu.CV.Structure;
+using Emgu.CV.CvEnum;
 
 namespace CAPIStreamServer
 {
 
-    public delegate byte[] ImageWork(SocketData s);
+    public delegate SocketData ImageWork(SocketData s);
     class ServerWork
     {
+        string m_VideoCaptureFilename;
+        Capture m_VideoCaptureInterface;
+        int m_VideoCaptureFrameCount;
+        private Mat m_FrameMat;
+
+        public void InitVideoCapture(string path)
+        {
+            try
+            {
+                m_FrameMat = new Mat();
+                m_VideoCaptureFilename = path;
+                m_VideoCaptureInterface = null;
+                m_VideoCaptureInterface = new Capture(m_VideoCaptureFilename);
+                m_VideoCaptureInterface.SetCaptureProperty(CapProp.FrameHeight, 640);
+                m_VideoCaptureInterface.SetCaptureProperty(CapProp.FrameWidth, 360);
+                m_VideoCaptureInterface.SetCaptureProperty(CapProp.Fps, 5);
+                m_VideoCaptureInterface.ImageGrabbed += VideoCaptureInterface_ImageGrabbed;
+                m_VideoCaptureFrameCount = (int)m_VideoCaptureInterface.GetCaptureProperty(CapProp.FrameCount);
+                m_VideoCaptureInterface.Start();
+            }
+            catch (Exception e)
+            {
+            }
+        }
+        private void VideoCaptureInterface_ImageGrabbed(object sender, EventArgs e)
+        {
+            try
+            {
+                if (!m_VideoCaptureInterface.Retrieve(m_FrameMat, 0))
+                    return;
+
+                Image<Bgr, byte> frame = m_FrameMat.ToImage<Bgr, byte>();
+
+                if (frame != null)
+                {
+                    frame = frame.Resize(640, 360, Inter.Cubic);
+                    Process(frame);
+                    Thread.Sleep(25);
+                    //Application.Current.Dispatcher.Invoke(new Action(() => Display(frame.Convert<Bgra, byte>())));
+                }
+            }
+            catch (Exception ex)
+            {
+                //MessageBox.Show(ex.Message);
+            }
+
+            
+            m_VideoCaptureFrameCount--;
+
+            Console.WriteLine(m_VideoCaptureFrameCount);
+
+            if (m_VideoCaptureFrameCount <= 0)
+            {
+            }
+        }
+
+        private void Process(Image<Bgr, byte> frame)
+        {            
+            CvInvoke.Imshow("frame", frame);
+            CvInvoke.WaitKey(1);
+            Console.WriteLine("Byte[] Length = {0}", (uint)frame.Bytes.Length);
+            SocketData sendPacket1 = new SocketData(PacketType.VIDEO_FRAME, clientID, 13, 14, (uint)frame.Bytes.Length, frame.Bytes);
+            CAPINetworkUtility.sendDataPacket(socket, sendPacket1);
+        }
+
+
+
         // Client  socket.
         public Socket socket = null;
         public uint clientID = 0;
@@ -39,8 +109,19 @@ namespace CAPIStreamServer
             SocketData dataPacket;
             byte[] img_data;
             Boolean doWork = true;
+
+            //InitVideoCapture(@"C:\Users\Peter A. Zientara\Documents\Projects\CAPIStreamMaster\CAPIStreamCSharp\CAPIStream\CAPIServerTest\Saft-scrub-v1.mp4");
             while (doWork)
-            {
+            {/*
+                Image<Bgra, Byte> im = new Image<Bgra, Byte>(@"C:\Users\Peter A. Zientara\Documents\Projects\CAPIStreamMaster\CAPIStreamCSharp\CAPIStream\CAPIServerTest\red_Car.jpg");
+                im = im.Resize(640, 360, Emgu.CV.CvEnum.Inter.Cubic);
+                CvInvoke.Imshow("frame", im);
+                CvInvoke.WaitKey(1);
+                Console.WriteLine("Byte[] Length = {0}", im.Bytes.Length);
+                SocketData sendPacket1 = new SocketData(PacketType.VIDEO_FRAME, clientID, 13, 14, (uint)im.Bytes.Length, im.Bytes);
+                CAPINetworkUtility.sendDataPacket(socket, sendPacket1);
+                */
+                //continue;
                 dataPacket = CAPINetworkUtility.receiveDataPacket(socket);
                 if(dataPacket == null)
                 {
@@ -48,116 +129,17 @@ namespace CAPIStreamServer
                     doWork = false;
                     return;
                 }
-                byte[] retData = null;
                 //Delegate based calls
+                SocketData returnPacket = null;
                 if (workFunctions.ContainsKey(dataPacket.message_type))
                 {
                     ImageWork del = workFunctions[dataPacket.message_type];
-                    retData = del(dataPacket);
+                    returnPacket = del(dataPacket);
                 }
-                if(retData != null)
+                if (returnPacket != null)
                 {
-                    switch (dataPacket.message_type)
-                    {
-                        case PacketType.VIDEO_FRAME:
-                            {
-                                SocketData sendPacket = new SocketData(PacketType.KEYPOINT_MATCHES, clientID, 13, 14, (uint)retData.Length, retData);
-                                CAPINetworkUtility.sendDataPacket(socket, sendPacket);
-                                break;
-                            }
-                        case PacketType.MODEL_KEYPOINT_EXTRACT:
-                            {
-                                SocketData sendPacket = new SocketData(PacketType.KEYPOINTS, clientID, 13, 14, (uint)retData.Length, retData);
-                                CAPINetworkUtility.sendDataPacket(socket, sendPacket);
-                                break;
-                            }
-                        case PacketType.MODELS_DONE:
-                            {
-                                //models_finished();
-                                break;
-                            }
-                        case PacketType.CONNECTION_DISCONNECT:
-                            {
-                                //client_count--;
-                                //close(socketfd);
-                                doWork = false;
-                                break;
-                            }
-                        default:
-                            {
-                                //do nothing??
-                                break;
-                            }
-                    }
+                    CAPINetworkUtility.sendDataPacket(socket, returnPacket);
                 }
-                else
-                {
-                    SocketData sendPacket = new SocketData(PacketType.WORK_ACK, clientID, 43, 44, 0);
-                    CAPINetworkUtility.sendDataPacket(socket, sendPacket);
-                }
-                #region old handling of packets
-                /*
-
-                switch (dataPacket.message_type)
-                {
-                    case PacketType.VIDEO_FRAME:
-                        {
-                            //fprintf(stdout, "Video rows: %i\n", data.message_length);
-                            img_data = dataPacket.data;
-                            #pragma warning - implement the functionaility
-                            Console.WriteLine("Image received, Width:{0}, Height:{1}", dataPacket.message_id, dataPacket.stream_id);
-                            //height width
-                            //apply emgu there, message_id == x, stream_id == height;
-                            //cv::Mat mat = cv::Mat(dataPacket.message_id, dataPacket.stream_id, CV_8UC3, (void*)img_data);
-                            //cv::imshow("Transmitted Frame", mat);
-                            //cv::waitKey(1);
-                            //int length = 0;
-                            //uint8_t* data = runSURF(mat, &length, true);
-                            //uint8_t * data = NULL;
-                            byte[] data = null;
-                            uint length = 0;
-                            SocketData sendPacket = new SocketData(PacketType.KEYPOINT_MATCHES, 12, 13, 14, length, data);
-                            //print_data_packet(&sendPacket);
-                            CAPINetworkUtility.sendDataPacket(socket, sendPacket);
-                            break;
-                        }
-                    case PacketType.MODEL_KEYPOINT_EXTRACT:
-                        {
-                            //fprintf(stdout, "Video rows: %i\n", data.message_length);
-                            img_data = dataPacket.data;
-#pragma warning - implement the functionaility
-                            //height width
-                            //apply emgu there, message_id == x, stream_id == height;
-                            //cv::Mat mat = cv::Mat(dataPacket.message_id, dataPacket.stream_id, CV_8UC3, (void*)img_data);
-
-
-                            byte[] data = null;
-                            uint length = 0;
-                            SocketData sendPacket = new SocketData(PacketType.KEYPOINTS, 12, 13, 14, length, data);
-                            //print_data_packet(&sendPacket);
-                            CAPINetworkUtility.sendDataPacket(socket, sendPacket);
-                            break;
-                        }
-                    case PacketType.MODELS_DONE:
-                        {
-                            //models_finished();
-                            break;
-                        }
-                    case PacketType.CONNECTION_DISCONNECT:
-                        {
-                            //client_count--;
-                            //close(socketfd);
-                            doWork = false;
-                            break;
-                        }
-                    default:
-                        {
-                            //do nothing??
-                            break;
-                        }
-                }
-                */
-                #endregion
             }
         }
         private void AcceptConnection(Socket socket)

@@ -22,7 +22,7 @@ namespace CAPIStreamCommon
     {
         public UInt32 width { get; set; }
         public UInt32 height { get; set; }
-        
+
         public CAPISize(UInt32 width, UInt32 height)
         {
             this.width = width;
@@ -57,12 +57,62 @@ namespace CAPIStreamCommon
                 width = (UInt32)((((((data[11] << 8) | data[10]) << 8) | data[9]) << 8) | data[8]);
                 height = (UInt32)((((((data[15] << 8) | data[14]) << 8) | data[13]) << 8) | data[12]);
                 rois.Add(new CAPIRoi(x, y, width, height));
-                if (i != roi_count - 1) {
+                if (i != roi_count - 1)
+                {
                     Array.Copy(data, 12 + (i + 1) * 16, tmpData, 0, 16);
                 }
             }
         }
     }
+    public class SURFKeypointSlim
+    {
+        public UInt32 laplacian { get; set; }
+        public UInt32 r1 { get; set; }
+        public UInt32 c1 { get; set; }
+        public UInt32 r2 { get; set; }
+        public UInt32 c2 { get; set; }
+        public float scale { get; set; }
+        public float orientation { get; set; }
+
+        public SURFKeypointSlim()
+        {
+        }
+        ~SURFKeypointSlim()
+        {
+
+        }
+
+        static public SURFKeypointSlim[] extract_keypoints(byte[] data, int data_len)
+        {
+            int num = data_len / (28);
+            SURFKeypointSlim[] points = new SURFKeypointSlim[num];
+            byte[] tmpData = new byte[28];
+            for (int i = 0; i < num; ++i)
+            {
+                Array.Copy(data, i * (28), tmpData, 0, 28);
+                points[i] = new SURFKeypointSlim();
+
+                //points[i].scale = (float)((((((tmpData[3] << 8) | tmpData[2]) << 8) | tmpData[1]) << 8) | tmpData[0]);
+                points[i].scale = System.BitConverter.ToSingle(tmpData, 0);
+                points[i].orientation = System.BitConverter.ToSingle(tmpData, 4);
+                //points[i].orientation = (float)((((((tmpData[7] << 8) | tmpData[6]) << 8) | tmpData[5]) << 8) | tmpData[4]);
+                points[i].laplacian = (UInt32)((((((tmpData[11] << 8) | tmpData[10]) << 8) | tmpData[9]) << 8) | tmpData[8]);
+                points[i].r1 = (UInt32)((((((tmpData[15] << 8) | tmpData[14]) << 8) | tmpData[13]) << 8) | tmpData[12]);
+                points[i].c1 = (UInt32)((((((tmpData[19] << 8) | tmpData[18]) << 8) | tmpData[17]) << 8) | tmpData[16]);
+                points[i].r2 = (UInt32)((((((tmpData[23] << 8) | tmpData[22]) << 8) | tmpData[21]) << 8) | tmpData[20]);
+                points[i].c2 = (UInt32)((((((tmpData[27] << 8) | tmpData[26]) << 8) | tmpData[25]) << 8) | tmpData[24]);
+
+                //points[i].printKeypoint();
+            }
+            return points;
+        }
+        void printKeypoint()
+        {
+            Console.WriteLine("Scale: {0}, Orientation:{1}, R1:{2}, R2:{3}", scale, orientation, r1, r2);
+        }
+
+    }
+
     public class SURFKeypoint
     {
         public UInt32 laplacian { get; set; }
@@ -85,12 +135,12 @@ namespace CAPIStreamCommon
 
         static public SURFKeypoint[] extract_keypoints(byte[] data, int data_len)
         {
-            int num = data_len / (28 + 64*4);
+            int num = data_len / (28 + 64 * 4);
             SURFKeypoint[] points = new SURFKeypoint[num];
-            byte[] tmpData = new byte[28 + 64*4];
+            byte[] tmpData = new byte[28 + 64 * 4];
             for (int i = 0; i < num; ++i)
             {
-                Array.Copy(data, i * (28 + 64*4), tmpData, 0, 28 + 64*4);
+                Array.Copy(data, i * (28 + 64 * 4), tmpData, 0, 28 + 64 * 4);
                 points[i] = new SURFKeypoint();
 
                 //points[i].scale = (float)((((((tmpData[3] << 8) | tmpData[2]) << 8) | tmpData[1]) << 8) | tmpData[0]);
@@ -105,7 +155,7 @@ namespace CAPIStreamCommon
 
                 for (int j = 0; j < 64; ++j)
                 {
-                    points[i].descriptor[j] = System.BitConverter.ToSingle(tmpData, 28 + j*4);
+                    points[i].descriptor[j] = System.BitConverter.ToSingle(tmpData, 28 + j * 4);
                     //Console.WriteLine("{0}", points[i].descriptor[j]);
                 }
                 //points[i].printKeypoint();
@@ -130,7 +180,7 @@ namespace CAPIStreamCommon
         public float frame_size { get; set; }
         public float frame_angle { get; set; }
         public float model_score { get; set; }
-        
+
         public float[] descriptor { get; set; }
 
         public SURFKeypointMatch()
@@ -140,16 +190,16 @@ namespace CAPIStreamCommon
 
         static public SURFKeypointMatch[] extract_keypoint_matches(byte[] data, int data_len)
         {
-            int num = data_len / (10*4);
+            int num = data_len / (10 * 4);
             SURFKeypointMatch[] points = new SURFKeypointMatch[num];
-            byte[] tmpData = new byte[10*4];
+            byte[] tmpData = new byte[10 * 4];
             for (int i = 0; i < num; ++i)
             {
-                Array.Copy(data, i * (10*4), tmpData, 0, 10*4);
+                Array.Copy(data, i * (10 * 4), tmpData, 0, 10 * 4);
                 points[i] = new SURFKeypointMatch();
 
                 points[i].model_id = (UInt32)((((((tmpData[3] << 8) | tmpData[2]) << 8) | tmpData[1]) << 8) | tmpData[0]);
-                points[i].model_x =  (UInt32)((((((tmpData[7] << 8) | tmpData[6]) << 8) | tmpData[5]) << 8) | tmpData[4]);
+                points[i].model_x = (UInt32)((((((tmpData[7] << 8) | tmpData[6]) << 8) | tmpData[5]) << 8) | tmpData[4]);
                 points[i].model_y = (UInt32)((((((tmpData[11] << 8) | tmpData[10]) << 8) | tmpData[9]) << 8) | tmpData[8]);
                 points[i].model_size = System.BitConverter.ToSingle(tmpData, 12);
                 points[i].model_angle = System.BitConverter.ToSingle(tmpData, 16);
@@ -176,4 +226,51 @@ namespace CAPIStreamCommon
 
     }
 
+    public class ROIRegion
+    {
+        public UInt32 x0 { get; set; }
+        public UInt32 y0 { get; set; }
+        public UInt32 x1 { get; set; }
+        public UInt32 y1 { get; set; }
+        public UInt32 x2 { get; set; }
+        public UInt32 y2 { get; set; }
+        public UInt32 x3 { get; set; }
+        public UInt32 y3 { get; set; }
+
+        public ROIRegion()
+        {
+        }
+        ~ROIRegion()
+        {
+
+        }
+
+        static public ROIRegion[] extract_regions(byte[] data, int data_len)
+        {
+            int num = data_len / (32);
+            ROIRegion[] points = new ROIRegion[num];
+            byte[] tmpData = new byte[32];
+
+            for (int i = 0; i < num; ++i)
+            {
+                Array.Copy(data, i * (32), tmpData, 0, 32);
+                points[i] = new ROIRegion();
+
+                points[i].x0 = (UInt32)((((((tmpData[3] << 8) | tmpData[2]) << 8) | tmpData[1]) << 8) | tmpData[0]);
+                points[i].y0 = (UInt32)((((((tmpData[7] << 8) | tmpData[6]) << 8) | tmpData[5]) << 8) | tmpData[4]);
+                points[i].x1 = (UInt32)((((((tmpData[11] << 8) | tmpData[10]) << 8) | tmpData[9]) << 8) | tmpData[8]);
+                points[i].y1 = (UInt32)((((((tmpData[15] << 8) | tmpData[14]) << 8) | tmpData[13]) << 8) | tmpData[12]);
+                points[i].x2 = (UInt32)((((((tmpData[19] << 8) | tmpData[18]) << 8) | tmpData[17]) << 8) | tmpData[16]);
+                points[i].y2 = (UInt32)((((((tmpData[23] << 8) | tmpData[22]) << 8) | tmpData[21]) << 8) | tmpData[20]);
+                points[i].x3 = (UInt32)((((((tmpData[27] << 8) | tmpData[26]) << 8) | tmpData[25]) << 8) | tmpData[24]);
+                points[i].y3 = (UInt32)((((((tmpData[31] << 8) | tmpData[30]) << 8) | tmpData[29]) << 8) | tmpData[28]);
+            }
+            return points;
+        }
+        void printKeypoint()
+        {
+            Console.WriteLine("[X{0},Y{1}],[X{2},Y{3}],[X{4},Y{5}],[X{6},Y{7}]", x0, y0, x1, y1, x2, y2, x3, y3);
+        }
+
+    }
 }

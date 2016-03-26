@@ -7,6 +7,11 @@ using System.Threading.Tasks;
 
 namespace CAPIStreamCommon
 {
+    public enum ConnectionType
+    {
+        UDP = 0,
+        TCP = 1
+    };
     public class CAPINetworkUtility
     {
         static private byte[] receiveLength(Socket socket, UInt32 length)
