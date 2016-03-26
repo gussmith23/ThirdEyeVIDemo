@@ -15,4 +15,9 @@ namespace WristbandCsharp
         int Pause();
         int Stop();
     }
+
+    class FrameFetchedEventArgs : EventArgs
+    {
+
+    }
 }
