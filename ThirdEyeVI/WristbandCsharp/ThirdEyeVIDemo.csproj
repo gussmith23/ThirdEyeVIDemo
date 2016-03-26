@@ -81,7 +81,10 @@
     <Compile Include="Arduino.cs" />
     <Compile Include="AsyncObjectRecognizerWorker.cs" />
     <Compile Include="AsyncSpeechWorker.cs" />
+    <Compile Include="FeedbackController.cs" />
     <Compile Include="FrameFetcher.cs" />
+    <Compile Include="FrameProcessor.cs" />
+    <Compile Include="NetworkFetcher.cs" />
     <Compile Include="SURFEngine.cs" />
     <Compile Include="Tracker.cs" />
     <Compile Include="ObjectRecognizer.cs" />

@@ -4,17 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 /*
- * This interface will send frame received event+frame data
+ * This inteface will send tracking data and receive
+ * frame received event + frame data
  */
 
 namespace WristbandCsharp
 {
-    interface FrameFetcher
+    interface FrameProcessor
     {
+        //eg of class would be CMT tracker
         int Start();
         int Pause();
         int Stop();
-        //eg. of classes implementing interface be Network Fetcher or Webcam Fetcher
     }
-
 }
