@@ -39,7 +39,7 @@ namespace CAPIServerTest
         //use this do demonstrate offload computation;
         static ConnectionControllerClient offload_client;
         static Boolean offload_client_ready = false;
-    
+
         private static readonly bool h264_encode = true;
         //Create functions to pass as delegate
         static byte[] handleGesture(SocketData d)
@@ -123,44 +123,44 @@ namespace CAPIServerTest
                     }
                     */
                     Image<Gray, Byte> image = new Image<Gray, Byte>(width, height);
-                    Buffer.BlockCopy(d.data, 0, image.Data, 0, 640*480);
+                    Buffer.BlockCopy(d.data, 0, image.Data, 0, 640 * 480);
                     CvInvoke.Imshow("frame", image);
                     CvInvoke.WaitKey(1);
                     //                    image.Resize(640, 360, Emgu.CV.CvEnum.Inter.Cubic);
                     //                    return image.Bytes ;
                     return null;
                 }
-                
+
             }
-            
-                #endregion
-                #region -- Glove Testing
-             /*
-            if(d != null){
-                int size = width * height * 4;
-                byte[] rgb_data = new byte[size];
-                unsafe
-                {
-                    IntPtr byteArray = Marshal.AllocHGlobal(d.data.Length);
-                    Marshal.Copy(d.data, 0, byteArray, d.data.Length);
-                    IntPtr rgb_data_ptr;
-                    rgb_data_ptr = convertYUVtoRGB(byteArray, width, height);
-                    Marshal.FreeHGlobal(byteArray);
-                    Marshal.Copy(rgb_data_ptr, rgb_data, 0, size);
-                }
-                Image<Bgra, Byte> image = new Image<Bgra, Byte>(width, height);
-                Buffer.BlockCopy(rgb_data, 0, image.Data, 0, size);
-                CvInvoke.Imshow("frame", image);
-                CvInvoke.WaitKey(1);
-            }
-            */
-                #endregion
+
+            #endregion
+            #region -- Glove Testing
+            /*
+           if(d != null){
+               int size = width * height * 4;
+               byte[] rgb_data = new byte[size];
+               unsafe
+               {
+                   IntPtr byteArray = Marshal.AllocHGlobal(d.data.Length);
+                   Marshal.Copy(d.data, 0, byteArray, d.data.Length);
+                   IntPtr rgb_data_ptr;
+                   rgb_data_ptr = convertYUVtoRGB(byteArray, width, height);
+                   Marshal.FreeHGlobal(byteArray);
+                   Marshal.Copy(rgb_data_ptr, rgb_data, 0, size);
+               }
+               Image<Bgra, Byte> image = new Image<Bgra, Byte>(width, height);
+               Buffer.BlockCopy(rgb_data, 0, image.Data, 0, size);
+               CvInvoke.Imshow("frame", image);
+               CvInvoke.WaitKey(1);
+           }
+           */
+            #endregion
             return null;
         }
         static SocketData configureOffload(SocketData d)
         {
             SocketData returnData = null;
-            if(d.message_type == PacketType.REGISTER_TASK_REPLY)
+            if (d.message_type == PacketType.REGISTER_TASK_REPLY)
             {
                 offload_client_ready = true;
             }
@@ -174,18 +174,19 @@ namespace CAPIServerTest
         {
             int avg_x = 0;
             int avg_y = 0;
-            foreach(Point p in points)
+            foreach (Point p in points)
             {
                 avg_x += p.X;
                 avg_y += p.Y;
             }
             avg_x = avg_x / 4;
             avg_y = avg_y / 4;
-            if(avg_x > ((2 / 3) * img.Rows))
+            if (avg_x > ((2 / 3) * img.Rows))
             {
                 //they need to move up
                 img.Draw("Up", new Point(0, img.Rows), Emgu.CV.CvEnum.FontFace.HersheyPlain, 4.0, new Bgra(0, 0, 255, 255), 3);
-            }else if(avg_x < ((1/3) * img.Rows))
+            }
+            else if (avg_x < ((1 / 3) * img.Rows))
             {
                 //they need to move down;
                 img.Draw("Down", new Point(0, img.Rows), Emgu.CV.CvEnum.FontFace.HersheyPlain, 4.0, new Bgra(0, 0, 255, 255), 3);
