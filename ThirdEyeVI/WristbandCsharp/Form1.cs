@@ -81,6 +81,10 @@ namespace WristbandCsharp
         // Show from cam handler.
         EventHandler ShowFromCamHandler;
 
+        // If we're currently processing a frame, then drop the incoming frame.
+        // This is just demo code. Will be thrown out with the big redesign.
+        int frameBeingProcessed = 0;
+
         #endregion
 
         #region shopping cart network connection
@@ -114,10 +118,10 @@ namespace WristbandCsharp
             #endregion
 
             #region setup server to wait for glove connection
-            //ServerController server = new ServerController();
-            ////for every delegate you want to functino
-            //server.registerDelegate(CAPIStreamCommon.PacketType.VIDEO_FRAME, new ImageWork(doWorkOnData));
-            //server.startServer(CAPIStreamServer.ConnectionType.TCP);
+            ServerController server = new ServerController();
+            //for every delegate you want to functino
+            server.registerDelegate(CAPIStreamCommon.PacketType.VIDEO_FRAME, new ImageWork(doWorkOnData));
+            server.startServer(CAPIStreamCommon.ConnectionType.TCP);
             #endregion
 
             #region setup decoder
@@ -191,92 +195,103 @@ namespace WristbandCsharp
         /// <summary>
         /// The function called when new data comes in from the CAPI network interface.
         /// Color-converts the image frame, runs tracking on it, and then gives feedback
-        /// via all active feedback channels e.g. audio, glove vibrations, etc.
+        /// via all active feedback channels e.g.audio, glove vibrations, etc.
         /// 
-        /// This code was hacked together for the 2015 demo. In the future, frames coming
+        /// This code was hacked together for the 2015 demo.In the future, frames coming
         /// in over the network should be treated exactly the same as frames coming in
         /// through the webcam; this will probably include rewriting this function so that
         /// it simply converts 
         /// </summary>
-        /// <param name="d"></param>
-        /// <returns></returns>
-        //private byte[] doWorkOnData(CAPIStreamCommon.SocketData d)
-        //{
-        //    #region declarations
-        //    Image<Bgr, Byte> return_image;
-        //    #endregion
+        /// <param name = "d" ></ param >
+        /// < returns ></ returns >
+        private CAPIStreamCommon.SocketData doWorkOnData(CAPIStreamCommon.SocketData d)
+        {
+            // Try to indicate that we're going to process the frame.
+            // If we're already processing, drop the frame.
+            // Specifically, if we do a compare/exchange and the existing value was actually
+            // 1, then we know a frame's already being processed, so return.
+            // If not, then the value's been set to 1, and we're good to go!
+            if (Interlocked.CompareExchange(ref frameBeingProcessed, 1, 0) == 1) return null;
+            
 
-        //    #region Convert to usable image + place in return_image using Peter's DLLs.
+            #region declarations
+            Image<Bgr, Byte> return_image;
+            #endregion
 
-        //    // Contact Peter Zientara about this piece of code.
+            #region Convert to usable image + place in return_image using Peter's DLLs.
 
-        //    if (d == null) return null;
+            // Contact Peter Zientara about this piece of code.
 
-        //    int size = stream_width * stream_height * 3;
-        //    byte[] rgb_data = new byte[size];
-        //    unsafe
-        //    {
-        //        IntPtr byteArray = Marshal.AllocHGlobal(d.data.Length);
-        //        Marshal.Copy(d.data, 0, byteArray, d.data.Length);
-        //        IntPtr rgb_data_ptr;
-        //        rgb_data_ptr = convertYUVtoRGB(byteArray, stream_width, stream_height);
-        //        Marshal.FreeHGlobal(byteArray);
-        //        Marshal.Copy(rgb_data_ptr, rgb_data, 0, size);
-        //    }
-        //    Image<Bgr, Byte> converted_image = new Image<Bgr, Byte>(stream_width, stream_height);
-        //    Buffer.BlockCopy(rgb_data, 0, converted_image.Data, 0, size);
-        //    //CvInvoke.cvShowImage("frame", image);
-        //    //CvInvoke.cvWaitKey(1);
+            if (d == null) return null;
 
-        //    return_image = converted_image;
-        
-        //    #endregion            
+            int size = stream_width * stream_height * 3;
+            byte[] rgb_data = new byte[size];
+            unsafe
+            {
+                IntPtr byteArray = Marshal.AllocHGlobal(d.data.Length);
+                Marshal.Copy(d.data, 0, byteArray, d.data.Length);
+                IntPtr rgb_data_ptr;
+                rgb_data_ptr = convertYUVtoRGB(byteArray, stream_width, stream_height);
+                Marshal.FreeHGlobal(byteArray);
+                Marshal.Copy(rgb_data_ptr, rgb_data, 0, size);
+            }
+            Image<Bgr, Byte> converted_image = new Image<Bgr, Byte>(stream_width, stream_height);
+            Buffer.BlockCopy(rgb_data, 0, converted_image.Data, 0, size);
+            //CvInvoke.cvShowImage("frame", image);
+            //CvInvoke.cvWaitKey(1);
 
-        //    #region run tracking and give feedback
-        //    if (cmtTracker != null)
-        //    {
-        //        return_image = cmtTracker.Process(return_image);
+            return_image = converted_image;
 
-        //        // TODO we need to implement a feedback channel interface.
+            #endregion
 
-        //        #region audio feedback
-        //        if (checkBox2.Checked)
-        //        {
-        //            // Get direction to force in
-        //            int direction = CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(stream_width / 2, stream_height / 2));
+            #region run tracking and give feedback
+            if (cmtTracker != null)
+            {
+                return_image = cmtTracker.Process(return_image);
 
-        //            switch (direction)
-        //            {
-        //                case 0:
-        //                    speechWorker.setDirection("left");
-        //                    break;
-        //                case 1:
-        //                    speechWorker.setDirection("down");
-        //                    break;
-        //                case 2:
-        //                    speechWorker.setDirection("right");
-        //                    break;
-        //                case 3:
-        //                    speechWorker.setDirection("up");
-        //                    break;
-        //                case -1:
-        //                    speechWorker.setDirection("");
-        //                    break;
-        //                case 5:
-        //                    speechWorker.setDirection("forward");
-        //                    break;
-        //            }
-        //        }
-        //        #endregion
+                // TODO we need to implement a feedback channel interface.
 
-        //    }
-        //    #endregion
+                #region audio feedback
+                if (checkBox2.Checked)
+                {
+                    // Get direction to force in
+                    int direction = CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(stream_width / 2, stream_height / 2));
 
-        //    // Remember: we have to actually update the window's picture!
-        //    pictureBox1.Image = return_image.ToBitmap();
+                    switch (direction)
+                    {
+                        case 0:
+                            speechWorker.setDirection("left");
+                            break;
+                        case 1:
+                            speechWorker.setDirection("down");
+                            break;
+                        case 2:
+                            speechWorker.setDirection("right");
+                            break;
+                        case 3:
+                            speechWorker.setDirection("up");
+                            break;
+                        case -1:
+                            speechWorker.setDirection("");
+                            break;
+                        case 5:
+                            speechWorker.setDirection("forward");
+                            break;
+                    }
+                }
+                #endregion
 
-        //    return null;
-        //}
+            }
+            #endregion
+
+            // Remember: we have to actually update the window's picture!
+            pictureBox1.Image = return_image.ToBitmap();
+
+            // No longer processing.
+            frameBeingProcessed = 0;
+
+            return null;
+        }
 
         /// <summary>
         /// Handles commands coming from the cart regarding which item to track.
@@ -285,13 +300,13 @@ namespace WristbandCsharp
         //private void getItemToTrackViaNetwork(CAPIStreamCommon.SocketData d)
         //{
         //    string item = System.Text.Encoding.ASCII.GetString(d.data);
-            
+
         //    // This stuff was hardcoded for the 2015 demo; should be done differently 
         //    //  in the future.
         //    cmtTracker = new CMTTracker("itemsToTrack/" + item + ".jpg");
 
         //}
-        
+
 
         /// <summary>
         /// Initializes tracker with a "Tracker" type object, so that Tracker.Process may be called on the next iteration of ShowFromCam.
