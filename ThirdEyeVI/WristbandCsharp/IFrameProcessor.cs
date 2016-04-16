@@ -12,7 +12,12 @@ namespace WristbandCsharp
 {
     interface IFrameProcessor
     {
-        void FrameFetched(object sender, FrameFetchedEventArgs e);
-        
+        //Raise event FrameProcessed
+        event EventHandler FrameProcessed;
+
+        int Start();
+        int Pause();
+        int Stop();
+
     }
 }
