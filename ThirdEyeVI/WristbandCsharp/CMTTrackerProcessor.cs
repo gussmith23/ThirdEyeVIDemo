@@ -21,7 +21,7 @@ using ObjectSpeechRecognizer;
 using System.Runtime.InteropServices;
 namespace WristbandCsharp
 {
-    class CMT_Tracker_Processor : IFrameProcessor
+    class CMTTrackerProcessor : IFrameProcessor
     {
         private Image<Bgr, Byte> frame_fetched;
 
