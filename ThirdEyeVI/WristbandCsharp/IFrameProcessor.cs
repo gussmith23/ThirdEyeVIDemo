@@ -10,15 +10,9 @@ using System.Threading.Tasks;
 
 namespace WristbandCsharp
 {
-    interface FrameProcessor
+    interface IFrameProcessor
     {
-        event EventHandler RawFrame;
-
-        event EventHandler FrameProcessed;
+        void FrameFetched(object sender, FrameFetchedEventArgs e);
         
-        //eg of class would be CMT tracker
-        int Start();
-        int Pause();
-        int Stop();
     }
 }

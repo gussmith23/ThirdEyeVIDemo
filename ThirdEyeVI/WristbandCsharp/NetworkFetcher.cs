@@ -25,9 +25,39 @@ namespace WristbandCsharp
 {
     class NetworkFetcher : IFrameFetcher  //implementing interface
     {
+
+        public event EventHandler FrameFetched;
+        private bool is_frame_fetched = false;
+
+        #region DLL imports for Peter's color conversion functions.
+
+        /**
+         * TODO there are problems here on different Windows platforms.
+         * I tried running this on Win10 and (using dependency walker) I discovered
+         * that needed Windows API dlls couldn't be found by ffmpeg_export.dll.
+         * Peter compiled this DLL (I think), and I think he did it on Win7 or 8.
+         * He may need to recompile, and a solution needs to be found to avoid this 
+         * in the future.
+         */
+
+        [DllImport(@"ffmpeg_export.dll")]
+        private static extern IntPtr convertYUVtoRGB(IntPtr yuv_data, int width, int height);
+
+        [DllImport(@"ffmpeg_export.dll")]
+        private static extern void initFrameConverter(int width, int height);
+
+        [DllImport(@"ffmpeg_export.dll")]
+        private static extern void deinitFrameConverter();
+
+        #endregion
+
+        // Streaming.
+        // Expected width and height.
+        int stream_width = 640, stream_height = 480;
+
         ServerController server; //This creates a server object
 
-        public event EventHandler FrameFetched;//This 
+        
 
         object objectLock = new object();
 
@@ -58,15 +88,51 @@ namespace WristbandCsharp
 
         public int Start()
         {
-           //server.registerDelegate(CAPIStreamCommon.PacketType.VIDEO_FRAME, new ImageWork(FetchImageFromNetwork));
+           server.registerDelegate(CAPIStreamCommon.PacketType.VIDEO_FRAME, new ImageWork(FetchImageFromNetwork));
             return 0;
         }
 
-        private byte[] FetchImageFromNetwork(SocketData s/*frame is passed*/)
+        private SocketData FetchImageFromNetwork(SocketData d /*frame is passed*/) //converts frame into usable frame
         {
-            FrameFetched?.Invoke(this, new EventArgs());
-            
-            throw new NotImplementedException();
+
+
+            #region declarations
+            Image<Bgr, Byte> return_image;
+            #endregion
+
+            #region Convert to usable image + place in return_image using Peter's DLLs.
+
+            // Contact Peter Zientara about this piece of code.
+
+            if (d == null) return null;
+
+            int size = stream_width * stream_height * 3;
+            byte[] rgb_data = new byte[size];
+            unsafe
+            {
+                IntPtr byteArray = Marshal.AllocHGlobal(d.data.Length);
+                Marshal.Copy(d.data, 0, byteArray, d.data.Length);
+                IntPtr rgb_data_ptr;
+                rgb_data_ptr = convertYUVtoRGB(byteArray, stream_width, stream_height);
+                Marshal.FreeHGlobal(byteArray);
+                Marshal.Copy(rgb_data_ptr, rgb_data, 0, size);
+            }
+            Image<Bgr, Byte> converted_image = new Image<Bgr, Byte>(stream_width, stream_height);
+            Buffer.BlockCopy(rgb_data, 0, converted_image.Data, 0, size);
+            //CvInvoke.cvShowImage("frame", image);
+            //CvInvoke.cvWaitKey(1);
+
+            return_image = converted_image;
+
+            #endregion
+
+            FrameFetchedEventArgs argsNetwork = new FrameFetchedEventArgs();
+
+            argsNetwork.Frame = return_image;
+
+            FrameFetched?.Invoke(this, argsNetwork);
+
+            return null;
 
             
         }
