@@ -27,6 +27,26 @@ namespace WristbandCsharp
 
         public event EventHandler FrameProcessed;
 
+        object objectLock = new object();
+
+        event EventHandler IFrameProcessor.FrameProcessed
+        {
+            add
+            {
+                lock (objectLock)
+                {
+                    FrameProcessed += value;
+                }
+            }
+            remove
+            {
+                lock (objectLock)
+                {
+                    FrameProcessed -= value;
+                }
+            }
+        }
+
         public void FrameFetched(object sender, FrameFetchedEventArgs e)
         {
             frame_fetched = e.Frame;          
