@@ -23,12 +23,29 @@ namespace WristbandCsharp
 {
     class CMT_Tracker_Processor : IFrameProcessor
     {
-        private Image<Bgr, Byte> frame_fetched;        
+        private Image<Bgr, Byte> frame_fetched;
+
+        public event EventHandler FrameProcessed;
 
         public void FrameFetched(object sender, FrameFetchedEventArgs e)
         {
             frame_fetched = e.Frame;          
 
+        }
+
+        public int Pause()
+        {
+            throw new NotImplementedException();
+        }
+
+        public int Start()
+        {
+            throw new NotImplementedException();
+        }
+
+        public int Stop()
+        {
+            throw new NotImplementedException();
         }
     }
 }
