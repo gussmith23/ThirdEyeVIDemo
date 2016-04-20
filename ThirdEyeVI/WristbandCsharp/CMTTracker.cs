@@ -60,6 +60,11 @@ namespace WristbandCsharp
         {
         }
 
+        /// <summary>
+        /// CMTTracker will attempt to find an object in the frame using SURF and then track
+        /// it using CMT. 
+        /// </summary>
+        /// <param name="roi">the "ideal" image of what we'd like to track.</param>
         public CMTTracker(Emgu.CV.Image<Bgr, byte> roi)
         {
             
