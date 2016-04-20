@@ -85,6 +85,11 @@ namespace WristbandCsharp
         // This is just demo code. Will be thrown out with the big redesign.
         int frameBeingProcessed = 0;
 
+        /// <summary>
+        /// Tracks the QR code on the glove.
+        /// </summary>
+        CMTTracker GloveTracker = null;
+        
         #endregion
 
         #region shopping cart network connection
@@ -178,8 +183,14 @@ namespace WristbandCsharp
             cap.SetCaptureProperty(Emgu.CV.CvEnum.CAP_PROP.CV_CAP_PROP_FRAME_WIDTH, width);
             #endregion
 
+            #region initialize glove tracker
+
+            GloveTracker = new CMTTracker("glove_qr_code.jpg");
+
+            #endregion
+
             #region create EventHandler 
-            
+
             /**
              * TODO we either need to make this handler work for ALL video input sources, 
              * or make different handlers for different situations.
@@ -385,6 +396,7 @@ namespace WristbandCsharp
             int width = (int)cap.GetCaptureProperty(Emgu.CV.CvEnum.CAP_PROP.CV_CAP_PROP_FRAME_WIDTH);
             int height = (int)cap.GetCaptureProperty(Emgu.CV.CvEnum.CAP_PROP.CV_CAP_PROP_FRAME_HEIGHT);
 
+            #region object tracking
 
             // If a tracker (of any kind) is initialized:
             if (tracker != null)
@@ -488,6 +500,28 @@ namespace WristbandCsharp
                 #endregion
 
             }
+
+            #endregion
+
+            #region hand tracking
+            
+            if (GloveTracker != null)
+            {
+                try
+                {
+                    GloveTracker.Process(image);
+                } catch (Exception exception)
+                {
+
+                }
+
+                if (GloveTracker.roi != Rectangle.Empty)
+                {
+                    returnimage.Draw(GloveTracker.roi, new Bgr(255, 0, 0), 1);
+                }
+            }
+
+            #endregion
             pictureBox1.Image = returnimage.ToBitmap();
 
         }
