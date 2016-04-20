@@ -38,7 +38,14 @@ namespace WristbandCsharp
         Image<Bgr, Byte> prevFrame;
         Image<Gray, Byte> curFrame;
 
-        
+        /// <summary>
+        /// Used in the two-step SURF initialization - we find an initial ROI on the first call
+        /// and return Rect.empty. Then, the next time around, we find another ROI and compare
+        /// the two. If they're roughly the same, we return the ROI.
+        /// </summary>
+        Rectangle lastROI = Rectangle.Empty;
+
+        private const double recall_threshold = 0.80d;
 
         public SURFEngine(Emgu.CV.Image<Bgr, byte> roi) : this(roi.Convert<Gray, byte>())
         {
@@ -61,6 +68,8 @@ namespace WristbandCsharp
             // Invalidate old ROI/projected points
             roi = Rectangle.Empty;
             projectedPoints = null;
+
+            Rectangle return_roi = Rectangle.Empty;
 
             Image<Gray, Byte> imageToDetect = image.Convert<Gray, Byte>();
             
@@ -102,7 +111,6 @@ namespace WristbandCsharp
 
             prevFrame = image;
 
-            
             if (homography != null)
             {
                 Rectangle rect = itemImage.ROI;
@@ -140,11 +148,37 @@ namespace WristbandCsharp
             //result.DrawPolyline(Array.ConvertAll<PointF, Point>(projectedPoints, Point.Round), true, new Bgr(Color.Red), 5);
             //CvInvoke.cvShowImage("test", result);
 
-            
+            #region check against last ROI
 
-            
+            if (lastROI != Rectangle.Empty && roi != Rectangle.Empty)
+            {
+                Rectangle intersect = Rectangle.Intersect(lastROI, roi);
+                int intersect_area = intersect.Width * intersect.Height;
+                Rectangle union = Rectangle.Union(lastROI, roi);
+                int union_area = union.Width * intersect.Height;
 
-            return roi;
+                double recall = (double)intersect_area / (double)union_area;
+
+                // If it passes threshold...
+                if (!double.IsNaN(recall) && !double.IsInfinity(recall) && recall > recall_threshold)
+                {
+                    return_roi = roi;
+                }
+                else
+                {
+                    return_roi = Rectangle.Empty;
+                }
+            }
+            else
+            {
+                return_roi = Rectangle.Empty;
+            }
+
+            #endregion
+
+
+            lastROI = roi;
+            return return_roi;
         }
 
     }
