@@ -63,6 +63,16 @@ namespace WristbandCsharp
             matcher.Add(itemDescriptors);
         }
 
+        /// <summary>
+        /// Attempts to find a match in a frame.
+        /// NOTE: This is a multi-step process! We get an initial ROI guess in the first call,
+        /// and in the second call we compute a second guess. We then calculate recall 
+        /// (intersection of ROIs over union of ROIs) and see if it passes some threshold.
+        /// If it does, we return.
+        /// Thus, this will have to be called at least twice to get a valid output ROI.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns>The ROI of the object, or Rectangle.Empty if nothing found.</returns>
         public Rectangle ProcessFrame(Image<Bgr, Byte> image)
         {
             // Invalidate old ROI/projected points
