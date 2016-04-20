@@ -207,10 +207,11 @@ namespace WristbandCsharp
         private CAPIStreamCommon.SocketData doWorkOnData(CAPIStreamCommon.SocketData d)
         {
             // Try to indicate that we're going to process the frame.
-            // If we're already processing, drop the frame.
+            // If someone's already processing, drop the frame.
             // Specifically, if we do a compare/exchange and the existing value was actually
             // 1, then we know a frame's already being processed, so return.
             // If not, then the value's been set to 1, and we're good to go!
+            // Note: cmpexchg compares first arg to third, and replaces with second if they're equal.
             if (Interlocked.CompareExchange(ref frameBeingProcessed, 1, 0) == 1) return null;
             
 
