@@ -517,7 +517,7 @@ namespace WristbandCsharp
 
                 if (GloveTracker.roi != Rectangle.Empty)
                 {
-                    returnimage.Draw(GloveTracker.roi, new Bgr(255, 0, 0), 1);
+                    returnimage.Draw(GloveTracker.roi, new Bgr(0, 255, 0), 2);
                 }
             }
 
