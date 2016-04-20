@@ -185,7 +185,7 @@ namespace WristbandCsharp
 
             #region initialize glove tracker
 
-            GloveTracker = new CMTTracker("glove_qr_code.jpg");
+            GloveTracker = new CMTTracker("logo.jpg");
 
             #endregion
 
