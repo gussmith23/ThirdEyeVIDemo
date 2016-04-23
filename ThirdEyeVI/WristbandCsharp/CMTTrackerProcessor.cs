@@ -27,8 +27,8 @@ namespace WristbandCsharp
     class CMTTrackerProcessor : IFrameProcessor
     {
 
+        public event FrameProcessedEventHandler FrameProcessed;
         private Image<Bgr, Byte> frame_fetched;
-
         public IFrameFetcher fetcher { get; set; }        
 
         //Constructor
@@ -37,56 +37,36 @@ namespace WristbandCsharp
 
         }
 
-         public CMTTrackerProcessor(IFrameFetcher fetcher)
+        public CMTTrackerProcessor(IFrameFetcher fetcher)
         {
             this.fetcher = fetcher;
         }
 
         private void FrameFetched(object sender, FrameFetchedEventArgs e)
         {
-            //do work on frame
+            // Get frame
             frame_fetched = e.Frame;
 
-        }
+            // DO IMAGE PROCESSING STUFF
 
+            // GET RESULTS
+
+            // Make FrameProcessedEventArgs
+            FrameProcessedEventArgs ProcessedArgs = new FrameProcessedEventArgs();
+
+            // Call FrameProcessed event.
+            FrameProcessed(this, ProcessedArgs);
+
+        }        
+
+        //protected virtual void OnFrameProcessed(FrameProcessedEventArgs e)
+        //{
+        //    if (FrameProcessed != null)
+        //    {
+        //        FrameProcessed(this, e);
+        //    }
+        //}
         
-
-        
-
-        public event FrameProcessedEventHandler FrameProcessed;
-
-        //public event EventHandler FrameFetched;
-
-        //object objectLock = new object();
-
-
-        protected virtual void OnFrameProcessed(FrameFetchedEventArgs e)
-        {
-            if (FrameProcessed != null)
-            {
-                FrameProcessed(this, e);
-            }
-        }
-
-
-        /* event EventHandler IFrameProcessor.FrameProcessed
-         {
-             add
-             {
-                 lock (objectLock)
-                 {
-                     FrameProcessed += value;
-                 }
-             }
-             remove
-             {
-                 lock (objectLock)
-                 {
-                     FrameProcessed -= value;
-                 }
-             }
-         }*/
-
         public int Start()
         {
             if (fetcher != null)
@@ -105,10 +85,8 @@ namespace WristbandCsharp
                 fetcher.FrameFetched -= new FrameFetchedEventHandler(FrameFetched);
             }
             return 0;
-
         }
-
-     
+        
         public int Stop()
         {
             throw new NotImplementedException();
