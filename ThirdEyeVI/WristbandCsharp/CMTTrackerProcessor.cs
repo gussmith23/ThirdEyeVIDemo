@@ -55,7 +55,7 @@ namespace WristbandCsharp
 
         public event FrameProcessedEventHandler FrameProcessed;
 
-       // public event EventHandler FrameFetched;
+        //public event EventHandler FrameFetched;
 
         //object objectLock = new object();
 

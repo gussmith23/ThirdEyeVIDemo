@@ -8,7 +8,7 @@ using Emgu.CV.Structure;
 
 namespace WristbandCsharp
 {
-    class FrameProcessedEventArgs
+    public class FrameProcessedEventArgs
     {
         public Image<Bgr, byte> Frame { get; set; }
     }
