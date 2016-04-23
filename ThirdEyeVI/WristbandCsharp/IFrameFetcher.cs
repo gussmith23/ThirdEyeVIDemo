@@ -7,10 +7,13 @@ using CAPIStreamServer;
 
 namespace WristbandCsharp
 {
+
+    public delegate void FrameFetchedEventHandler(Object sender, FrameFetchedEventArgs e);
+
     interface IFrameFetcher
     { 
         //Raise event FrameFetched
-        event EventHandler FrameFetched;
+        event FrameFetchedEventHandler FrameFetched;
 
         int Start();
         int Pause();

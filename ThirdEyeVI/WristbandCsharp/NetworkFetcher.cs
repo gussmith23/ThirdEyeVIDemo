@@ -19,15 +19,26 @@ using Speech;
 using System.Threading;
 using ObjectSpeechRecognizer;
 using System.Runtime.InteropServices;
-
+using static WristbandCsharp.NetworkFetcher;
 
 namespace WristbandCsharp
 {
-    class NetworkFetcher : IFrameFetcher  //implementing interface
-    {
+    
 
-        public event EventHandler FrameFetched;
-        private bool is_frame_fetched = false;
+    public class NetworkFetcher : IFrameFetcher  //implementing interface
+    {    
+
+        
+        public event FrameFetchedEventHandler FrameFetched;       
+
+        protected virtual void OnFrameFetched(FrameFetchedEventArgs e)
+        {
+            if(FrameFetched != null)
+            {
+                FrameFetched(this, e);
+            }
+        }
+
 
         #region DLL imports for Peter's color conversion functions.
 
@@ -59,9 +70,9 @@ namespace WristbandCsharp
 
         
 
-        object objectLock = new object();
+        //object objectLock = new object();
 
-        event EventHandler IFrameFetcher.FrameFetched
+       /* event EventHandler IFrameFetcher.FrameFetched
         {
             add
             {
@@ -78,7 +89,7 @@ namespace WristbandCsharp
                 }
             }
         }
-
+        */
 
         NetworkFetcher()//we don't want it to start until we tell it to start,
                         //therefore, start() is outside the constructor

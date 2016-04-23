@@ -19,50 +19,96 @@ using Speech;
 using System.Threading;
 using ObjectSpeechRecognizer;
 using System.Runtime.InteropServices;
+
+
+
 namespace WristbandCsharp
 {
     class CMTTrackerProcessor : IFrameProcessor
     {
+
         private Image<Bgr, Byte> frame_fetched;
 
-        public event EventHandler FrameProcessed;
+        public IFrameFetcher fetcher { get; set; }        
 
-        object objectLock = new object();
-
-        event EventHandler IFrameProcessor.FrameProcessed
+        //Constructor
+        public CMTTrackerProcessor()
         {
-            add
+
+        }
+
+         public CMTTrackerProcessor(IFrameFetcher fetcher)
+        {
+            this.fetcher = fetcher;
+        }
+
+        private void FrameFetched(object sender, FrameFetchedEventArgs e)
+        {
+            //do work on frame
+            frame_fetched = e.Frame;
+
+        }
+
+        
+
+        
+
+        public event FrameProcessedEventHandler FrameProcessed;
+
+       // public event EventHandler FrameFetched;
+
+        //object objectLock = new object();
+
+
+        protected virtual void OnFrameProcessed(FrameFetchedEventArgs e)
+        {
+            if (FrameProcessed != null)
             {
-                lock (objectLock)
-                {
-                    FrameProcessed += value;
-                }
-            }
-            remove
-            {
-                lock (objectLock)
-                {
-                    FrameProcessed -= value;
-                }
+                FrameProcessed(this, e);
             }
         }
 
-        public void FrameFetched(object sender, FrameFetchedEventArgs e)
-        {
-            frame_fetched = e.Frame;          
 
-        }
-
-        public int Pause()
-        {
-            throw new NotImplementedException();
-        }
+        /* event EventHandler IFrameProcessor.FrameProcessed
+         {
+             add
+             {
+                 lock (objectLock)
+                 {
+                     FrameProcessed += value;
+                 }
+             }
+             remove
+             {
+                 lock (objectLock)
+                 {
+                     FrameProcessed -= value;
+                 }
+             }
+         }*/
 
         public int Start()
         {
-            throw new NotImplementedException();
+            if (fetcher != null)
+            {
+                fetcher.FrameFetched += new FrameFetchedEventHandler(FrameFetched);
+            }
+            return 0;
         }
 
+       
+
+        public int Pause()
+        {
+            if (fetcher != null)
+            {
+                fetcher.FrameFetched -= new FrameFetchedEventHandler(FrameFetched);
+            }
+            return 0;
+
+        }
+
+     
         public int Stop()
         {
             throw new NotImplementedException();

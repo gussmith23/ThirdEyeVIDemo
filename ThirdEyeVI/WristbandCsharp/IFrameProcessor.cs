@@ -10,10 +10,12 @@ using System.Threading.Tasks;
 
 namespace WristbandCsharp
 {
+    public delegate void FrameProcessedEventHandler(Object sender, FrameFetchedEventArgs e);
+
     interface IFrameProcessor
     {
         //Raise event FrameProcessed
-        event EventHandler FrameProcessed;
+        event FrameProcessedEventHandler FrameProcessed;
 
         int Start();
         int Pause();

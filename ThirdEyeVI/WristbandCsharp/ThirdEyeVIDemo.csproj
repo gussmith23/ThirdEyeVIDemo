@@ -103,6 +103,7 @@
     <Compile Include="CMTTrackerProcessor.cs" />
     <Compile Include="FeedbackController.cs" />
     <Compile Include="FrameFetchedEventArgs.cs" />
+    <Compile Include="FrameProcessedEventArgs.cs" />
     <Compile Include="IFrameProcessor.cs" />
     <Compile Include="IFrameFetcher.cs" />
     <Compile Include="NetworkFetcher.cs" />
