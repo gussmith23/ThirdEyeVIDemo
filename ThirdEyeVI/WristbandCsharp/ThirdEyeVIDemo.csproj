@@ -127,24 +127,12 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="avcodec-57.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="avdevice-57.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="avfilter-6.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="avformat-57.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="avutil-55.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="ffmpeg_export.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Content Include="EmguDLLs\Emgu.CV.dll" />
+    <Content Include="EmguDLLs\Emgu.CV.UI.dll" />
+    <Content Include="EmguDLLs\Emgu.CV.UI.xml" />
+    <Content Include="EmguDLLs\Emgu.CV.xml" />
+    <Content Include="EmguDLLs\Emgu.Util.dll" />
+    <Content Include="EmguDLLs\Emgu.Util.xml" />
     <Content Include="itemsToTrack\Bran Flakes.jpg" />
     <Content Include="itemsToTrack\Cheerios.jpg" />
     <Content Include="itemsToTrack\Frosted Flakes.jpg" />
@@ -153,28 +141,7 @@
     <Content Include="itemsToTrack\Mini Wheats.jpg" />
     <Content Include="itemsToTrack\Progresso.jpg" />
     <Content Include="itemsToTrack\Sriracha.jpg" />
-    <Content Include="opencv_core249.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="opencv_imgproc249.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="postproc-54.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="swresample-2.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="swscale-4.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="x64DLLs\cvextern.dll" />
-    <Content Include="x64DLLs\Emgu.CV.dll" />
-    <Content Include="x64DLLs\Emgu.CV.UI.dll" />
-    <Content Include="x64DLLs\Emgu.CV.UI.xml" />
-    <Content Include="x64DLLs\Emgu.CV.xml" />
-    <Content Include="x64DLLs\Emgu.Util.dll" />
-    <Content Include="x64DLLs\Emgu.Util.xml" />
     <Content Include="x64DLLs\OpenCL.dll" />
     <Content Include="x64DLLs\opencv_calib3d2410.dll" />
     <Content Include="x64DLLs\opencv_contrib2410.dll" />
@@ -195,9 +162,6 @@
     <Content Include="x64DLLs\opencv_videostab2410.dll" />
     <Content Include="x64DLLs\ZedGraph.dll" />
     <Content Include="x86DLLs\cvextern.dll" />
-    <Content Include="x86DLLs\Emgu.CV.dll" />
-    <Content Include="x86DLLs\Emgu.CV.UI.dll" />
-    <Content Include="x86DLLs\Emgu.Util.dll" />
     <Content Include="x86DLLs\OpenCL.dll" />
     <Content Include="x86DLLs\opencv_calib3d2410.dll" />
     <Content Include="x86DLLs\opencv_contrib2410.dll" />
@@ -216,9 +180,6 @@
     <Content Include="x86DLLs\opencv_superres2410.dll" />
     <Content Include="x86DLLs\opencv_video2410.dll" />
     <Content Include="x86DLLs\opencv_videostab2410.dll" />
-    <Content Include="ZedGraph.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Form1.resx">
