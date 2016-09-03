@@ -100,6 +100,7 @@
     <Compile Include="Arduino.cs" />
     <Compile Include="AsyncObjectRecognizerWorker.cs" />
     <Compile Include="AsyncSpeechWorker.cs" />
+    <Compile Include="CMTROITracker.cs" />
     <Compile Include="FeedbackController.cs" />
     <Compile Include="FrameProcessor.cs" />
     <Compile Include="IFrameFetcher.cs" />

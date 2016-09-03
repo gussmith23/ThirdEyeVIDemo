@@ -49,7 +49,7 @@ namespace WristbandCsharp
 
         #region declarations and initializations.
 
-        int camera = 1;
+        int camera = 0;
         Capture cap;
         Image<Bgr,Byte> image;
         CMTTracker cmtTracker = null;
@@ -334,7 +334,7 @@ namespace WristbandCsharp
                     tracker = new CMTTracker(itemImage);
                     break;
                 case 1:
-                    throw new NotImplementedException("Write the code for Pure SURF tracking!");
+                    tracker = new CMTROITracker(itemImage);
                     break;
                 default:
                     tracker = null;
