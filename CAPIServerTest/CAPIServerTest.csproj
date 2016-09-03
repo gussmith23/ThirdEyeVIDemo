@@ -88,6 +88,10 @@
       <Project>{79d59ff1-dadf-4eed-8321-c36c38d65646}</Project>
       <Name>CAPIStreamCommon</Name>
     </ProjectReference>
+    <ProjectReference Include="..\CAPIStreamServer\CAPIStreamServer.csproj">
+      <Project>{15818dac-2d3c-4d64-a7c0-0f88499ce793}</Project>
+      <Name>CAPIStreamServer</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
