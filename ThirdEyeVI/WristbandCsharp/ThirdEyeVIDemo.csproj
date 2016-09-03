@@ -245,6 +245,10 @@
       <Project>{041772d0-10c9-4f02-86d0-e2e985f48d38}</Project>
       <Name>CMT_Tracker</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\FindBestROIUtil\FindBestROIUtil\FindBestROIUtil.csproj">
+      <Project>{3da303b1-30e1-4ccd-ad93-e6c33e556411}</Project>
+      <Name>FindBestROIUtil</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">
