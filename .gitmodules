@@ -1,3 +1,6 @@
 [submodule "CMT_Tracker"]
 	path = CMT_Tracker
 	url = https://github.com/gussmith23/CMT_Tracker
+[submodule "FindBestROIUtil"]
+	path = FindBestROIUtil
+	url = https://github.com/gussmith23/FindBestROIUtil
