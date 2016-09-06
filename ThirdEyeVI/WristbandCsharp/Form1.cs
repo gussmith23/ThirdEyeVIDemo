@@ -89,6 +89,8 @@ namespace WristbandCsharp
         /// Tracks the QR code on the glove.
         /// </summary>
         CMTTracker GloveTracker = null;
+
+        private Size CMTROITrackerPatchSize = new Size(200, 200);
         
         #endregion
 
@@ -185,7 +187,8 @@ namespace WristbandCsharp
 
             #region initialize glove tracker
 
-            GloveTracker = new CMTTracker("logo.jpg");
+            // not using the glove tracker for now.
+            //GloveTracker = new CMTTracker("logo.jpg");
 
             #endregion
 
@@ -334,7 +337,7 @@ namespace WristbandCsharp
                     tracker = new CMTTracker(itemImage);
                     break;
                 case 1:
-                    tracker = new CMTROITracker(itemImage);
+                    tracker = new CMTROITracker(itemImage, CMTROITrackerPatchSize);
                     break;
                 default:
                     tracker = null;
@@ -522,6 +525,7 @@ namespace WristbandCsharp
             }
 
             #endregion
+
             pictureBox1.Image = returnimage.ToBitmap();
 
         }
