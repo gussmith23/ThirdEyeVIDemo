@@ -138,6 +138,8 @@ namespace WristbandCsharp
             centerOfObject.X = roi.X + roi.Width / 2;
             centerOfObject.Y = roi.Y + roi.Height / 2;
 
+            CenterOfObject = new Point((int)centerOfObject.X, (int)centerOfObject.Y);
+
             return Draw ? DrawROI(image) : image;
         }
 
