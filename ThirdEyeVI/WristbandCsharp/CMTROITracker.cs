@@ -16,39 +16,41 @@ namespace WristbandCsharp
 {
     class CMTROITracker : Tracker
     {
-        private bool Initialized = false;
-        Image<Bgr, Byte> ModelImage;
-        Size PatchSize = new Size(300, 300);
-        CMTTracker tracker = null;
+        private Image<Bgr, Byte> ModelImage;
+        private Size PatchSize = Size.Empty;
+        private CMTTracker Tracker = null;
 
         /// <summary>
-        /// CMTTracker will attempt to find an object in the frame using SURF and then track
-        /// it using CMT. 
+        /// CMTROITracker will use FindBestROIUtil to break the image up into chunks and find which chunk
+        /// most matches the model image. Then, it will track that chunk. The idea here is that, if there 
+        /// are many duplicates of the object represented by the model image (e.g. like on a grocery store
+        /// shelf) then this method will reduce the issues caused by having duplicates.
         /// </summary>
-        /// <param name="roi">the "ideal" image of what we'd like to track.</param>
-        public CMTROITracker(Emgu.CV.Image<Bgr, byte> roi)
+        /// <param name="ModelImage">the "ideal" image of what we'd like to track.</param>
+        public CMTROITracker(Image<Bgr, byte> ModelImage, Size PatchSize)
         {
-            ModelImage = roi;
+            this.ModelImage = ModelImage;
+            this.PatchSize = PatchSize;
         }
 
 
         public override Image<Bgr, Byte> Process(Image<Bgr, Byte> image)
         {
-            if (tracker == null)
+            if (Tracker == null)
             {
                 Rectangle BestROI = FindBestROIUtil.FindBestROIUtil.FindBestROI(image.Convert<Gray, byte>(), ModelImage.Convert<Gray, byte>(), PatchSize);
                 if (BestROI != Rectangle.Empty)
                 {
                     Image<Bgr, byte> ROIImage = image.Clone();
                     ROIImage.ROI = BestROI;
-                    tracker = new CMTTracker(ROIImage);
-                    return tracker.Process(image);
+                    Tracker = new CMTTracker(ROIImage);
+                    return Tracker.Process(image);
                 }
                 return image;
             }
             else
             {
-                return tracker.Process(image);
+                return Tracker.Process(image);
             }
         }
     }
