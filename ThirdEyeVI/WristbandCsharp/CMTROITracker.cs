@@ -19,6 +19,8 @@ namespace WristbandCsharp
         private Image<Bgr, Byte> ModelImage;
         private Size PatchSize = Size.Empty;
         private CMTTracker Tracker = null;
+        Matrix<float> Homography = null;
+        private PointF CenterRelativeToPatch = PointF.Empty;
 
         /// <summary>
         /// CMTROITracker will use FindBestROIUtil to break the image up into chunks and find which chunk
@@ -38,20 +40,27 @@ namespace WristbandCsharp
         {
             if (Tracker == null)
             {
-                Rectangle BestROI = FindBestROIUtil.FindBestROIUtil.FindBestROI(image.Convert<Gray, byte>(), ModelImage.Convert<Gray, byte>(), PatchSize);
+                Rectangle BestROI = FindBestROIUtil.FindBestROIUtil.FindBestROI(image.Convert<Gray, byte>(), ModelImage.Convert<Gray, byte>(), PatchSize, out CenterRelativeToPatch);
                 if (BestROI != Rectangle.Empty)
                 {
                     Image<Bgr, byte> ROIImage = image.Clone();
                     ROIImage.ROI = BestROI;
-                    Tracker = new CMTTracker(ROIImage);
-                    return Tracker.Process(image);
+                    Tracker = new CMTTracker(ROIImage, false);
                 }
-                return image;
+                else {
+                    return image;
+                }
             }
-            else
-            {
-                return Tracker.Process(image);
+
+            Image<Bgr, Byte> OutImage = Tracker.Process(image);
+
+            if (CenterRelativeToPatch != PointF.Empty) {
+                CenterOfObject = new Point(Tracker.roi.X + (int)(((float)Tracker.roi.Width / (float)PatchSize.Width) * CenterRelativeToPatch.X), Tracker.roi.Y + (int)(((float)Tracker.roi.Height / (float)PatchSize.Height) * CenterRelativeToPatch.Y));
             }
+
+            OutImage.Draw(new CircleF(CenterOfObject, 10), new Bgr(0, 255, 255), 20);
+
+            return OutImage;
         }
     }
 }

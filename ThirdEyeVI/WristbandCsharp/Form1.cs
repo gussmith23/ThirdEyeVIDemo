@@ -52,7 +52,6 @@ namespace WristbandCsharp
         int camera = 0;
         Capture cap;
         Image<Bgr,Byte> image;
-        CMTTracker cmtTracker = null;
         Arduino arduino;
         Boolean tracking = false;
         SpeechEngine speechEngine = null;
@@ -260,9 +259,9 @@ namespace WristbandCsharp
             #endregion
 
             #region run tracking and give feedback
-            if (cmtTracker != null)
+            if (tracker != null)
             {
-                return_image = cmtTracker.Process(return_image);
+                return_image = tracker.Process(return_image);
 
                 // TODO we need to implement a feedback channel interface.
 
@@ -270,7 +269,7 @@ namespace WristbandCsharp
                 if (checkBox2.Checked)
                 {
                     // Get direction to force in
-                    int direction = CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(stream_width / 2, stream_height / 2));
+                    int direction = CMTTracker.findDirection(tracker.CenterOfObject, new PointF(stream_width / 2, stream_height / 2));
 
                     switch (direction)
                     {
@@ -404,16 +403,9 @@ namespace WristbandCsharp
             // If a tracker (of any kind) is initialized:
             if (tracker != null)
             {
-                // Call Process on our tracker; will either process with CMT or SURF
-                returnimage = tracker.Process(image);
-
-            }
-
-            if (cmtTracker != null)
-            {
                 try
                 {
-                    returnimage = cmtTracker.Process(image);
+                    returnimage = tracker.Process(image);
                 }
                 catch (Exception exception)
                 {
@@ -428,8 +420,8 @@ namespace WristbandCsharp
                     {
                         
 
-                        //arduino.Process(tracker.roi, tracker.centerOfObject, new PointF(pictureBox1.Width / 2, pictureBox1.Height / 2));
-                        arduino.SendPacket(CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(width / 2, height / 2)),
+                        //arduino.Process(tracker.roi, tracker.CenterOfObject, new PointF(pictureBox1.Width / 2, pictureBox1.Height / 2));
+                        arduino.SendPacket(CMTTracker.findDirection(tracker.CenterOfObject, new PointF(width / 2, height / 2)),
                             100, 100);
                     }
                     // COM Port died.
@@ -447,7 +439,7 @@ namespace WristbandCsharp
                 if (checkBox2.Checked)
                 {
                     // Get direction to force in
-                    int direction = CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(width / 2, height / 2));
+                    int direction = CMTTracker.findDirection(tracker.CenterOfObject, new PointF(width / 2, height / 2));
 
                     switch (direction)
                     {
@@ -478,27 +470,29 @@ namespace WristbandCsharp
                 if (checkBox3.Checked)
                 {
                     // Get direction to force in
-                    int direction = CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(pictureBox1.Width / 2, pictureBox1.Height / 2));
+                    int direction = CMTTracker.findDirection(tracker.CenterOfObject, new PointF(width / 2, height / 2));
 
                     switch (direction)
                     {
                         case 0:
-                            label5.Text = "right";
-                            break;
-                        case 1:
-                            label5.Text = "up";
-                            break;
-                        case 2:
                             label5.Text = "left";
                             break;
-                        case 3:
+                        case 1:
                             label5.Text = "down";
+                            break;
+                        case 2:
+                            label5.Text = "right";
+                            break;
+                        case 3:
+                            label5.Text = "up";
+                            break;
+                        case 5:
+                            label5.Text = "forward";
                             break;
                         case -1:
                             label5.Text = "";
                             break;
                     }
-
                 }
                 #endregion
 
@@ -546,7 +540,7 @@ namespace WristbandCsharp
             // If the change happened via the voice recognizer...
             if (radioButton2.Checked)
             {
-                cmtTracker = new CMTTracker(
+                tracker = new CMTTracker(
                 string.Format("itemsToTrack/{0}.jpg", comboBox1.SelectedItem)
                 );
             }
@@ -571,9 +565,6 @@ namespace WristbandCsharp
 
         private void button2_Click(object sender, EventArgs e)
         {
-            // This statement is not really necessary, but i'm leaving it for now.
-            cmtTracker = null;
-
             tracker = null;
         }
 
@@ -746,35 +737,35 @@ namespace WristbandCsharp
 
         private void button3_Click_1(object sender, EventArgs e)
         {
-            cmtTracker = new CMTTracker(
+            tracker = new CMTTracker(
                 "itemsToTrack/Frosted Flakes.jpg"
                 );
         }
 
         private void button7_Click(object sender, EventArgs e)
         {
-            cmtTracker = new CMTTracker(
+            tracker = new CMTTracker(
                 "itemsToTrack/Bran Flakes.jpg"
                 );
         }
 
         private void button8_Click(object sender, EventArgs e)
         {
-            cmtTracker = new CMTTracker(
+            tracker = new CMTTracker(
                 "itemsToTrack/Ketchup.jpg"
                 );
         }
 
         private void button9_Click(object sender, EventArgs e)
         {
-            cmtTracker = new CMTTracker(
+            tracker = new CMTTracker(
                 "itemsToTrack/Progresso.jpg"
                 );
         }
 
         private void button10_Click(object sender, EventArgs e)
         {
-            cmtTracker = new CMTTracker(
+            tracker = new CMTTracker(
                 "itemsToTrack/Sriracha.jpg"
             );
         }
@@ -786,7 +777,6 @@ namespace WristbandCsharp
 
         private void radioButton4_CheckedChanged(object sender, EventArgs e)
         {
-            if (cmtTracker != null) cmtTracker.trackWithCMT = radioButton4.Checked;
         }
 
         private void radioButton5_CheckedChanged_1(object sender, EventArgs e)
