@@ -13,10 +13,14 @@ namespace WristbandCsharp
     {
 
         public Rectangle roi;
+        public Point CenterOfObject;
 
-        /**
-         * This method should not return anything; it should instead update the Tracker object's ROI.
-         */
+        /// <summary>
+        /// This method should not return anything; it should instead update the Tracker object's ROI.
+        /// The return type is a matter of legacy.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns></returns>
         public abstract Image<Bgr,Byte> Process(Image<Bgr, Byte> image);
 
 
