@@ -127,6 +127,14 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="dlls_needed_by_ffmpeg\avcodec-57.dll" />
+    <Content Include="dlls_needed_by_ffmpeg\avdevice-57.dll" />
+    <Content Include="dlls_needed_by_ffmpeg\avfilter-6.dll" />
+    <Content Include="dlls_needed_by_ffmpeg\avformat-57.dll" />
+    <Content Include="dlls_needed_by_ffmpeg\avutil-55.dll" />
+    <Content Include="dlls_needed_by_ffmpeg\postproc-54.dll" />
+    <Content Include="dlls_needed_by_ffmpeg\swresample-2.dll" />
+    <Content Include="dlls_needed_by_ffmpeg\swscale-4.dll" />
     <Content Include="EmguDLLs\Emgu.CV.dll" />
     <Content Include="EmguDLLs\Emgu.CV.UI.dll" />
     <Content Include="EmguDLLs\Emgu.CV.UI.xml" />
@@ -224,6 +232,7 @@
   <PropertyGroup>
     <PostBuildEvent>XCOPY "$(SolutionDir)\ThirdEyeVI\itemsToTrack" "$(TargetDir)\itemsToTrack\" /E /Y
 copy/b/y "$(ProjectDir)\EmguDLLs\*.dll" "$(TargetDir)"
+copy/b/y "$(ProjectDir)\dlls_needed_by_ffmpeg\*.dll" "$(TargetDir)"
 if $(PlatformName) == x64 (
 copy/b/y "$(ProjectDir)\x64DLLs\*.dll" "$(TargetDir)"
 ) ELSE (
