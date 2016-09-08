@@ -264,6 +264,8 @@
     <PostBuildEvent>XCOPY "$(SolutionDir)\ThirdEyeVI\itemsToTrack" "$(TargetDir)\itemsToTrack\" /E /Y
 if $(PlatformName) == x64 (
 copy/b/y "$(ProjectDir)\EmguDLLs\*.dll" "$(TargetDir)"
+REM we copy the ffmpeg_export dll by "guessing" where it is...please fix this - do it the right way!
+copy/b/y "$(SolutionDir)ffmpeg_export\$(PlatformName)\$(ConfigurationName)\ffmpeg_export.dll" "$(TargetDir)ffmpeg_export.dll"
 copy/b/y "$(ProjectDir)\x64DLLs\*.dll" "$(TargetDir)"
 ) ELSE (
 copy/b/y "$(ProjectDir)\x86DLLs\*.dll" "$(TargetDir)"
