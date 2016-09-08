@@ -7,8 +7,8 @@
     <ProjectGuid>{CD5327FB-3B05-4D84-8A3E-C95A3228F3F7}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WristbandCsharp</RootNamespace>
-    <AssemblyName>WristbandCsharp</AssemblyName>
+    <RootNamespace>ThirdEyeVIDemo</RootNamespace>
+    <AssemblyName>ThirdEyeVIDemo</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

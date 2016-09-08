@@ -12,7 +12,7 @@ using Emgu.CV.Features2D;
 using Emgu.CV.Util;
 using CMT_Tracker;
 
-namespace WristbandCsharp
+namespace ThirdEyeVIDemo
 {
     class CMTTracker : Tracker
     {

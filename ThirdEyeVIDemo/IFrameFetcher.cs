@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CAPIStreamServer;
 
-namespace WristbandCsharp
+namespace ThirdEyeVIDemo
 {
     interface IFrameFetcher
     { 

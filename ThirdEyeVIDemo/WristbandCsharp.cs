@@ -9,9 +9,9 @@ using Emgu.Util;
 using Emgu.CV.UI;
 using Emgu.CV.Structure;
 
-namespace WristbandCsharp
+namespace ThirdEyeVIDemo
 {
-    class WristbandCsharp
+    class ThirdEyeVIDemo
     {
         [STAThread]
         static void Main(string[] args)

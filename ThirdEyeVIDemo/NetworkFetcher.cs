@@ -21,7 +21,7 @@ using ObjectSpeechRecognizer;
 using System.Runtime.InteropServices;
 
 
-namespace WristbandCsharp
+namespace ThirdEyeVIDemo
 {
     class NetworkFetcher : IFrameFetcher  //implementing interface
     {

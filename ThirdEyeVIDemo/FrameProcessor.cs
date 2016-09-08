@@ -8,7 +8,7 @@ using System.Threading.Tasks;
  * frame received event + frame data
  */
 
-namespace WristbandCsharp
+namespace ThirdEyeVIDemo
 {
     interface FrameProcessor
     {

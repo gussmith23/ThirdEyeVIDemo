@@ -10,7 +10,7 @@ using System.Threading.Tasks;
  */
 
 
-namespace WristbandCsharp
+namespace ThirdEyeVIDemo
 {
     class FeedbackController
     {

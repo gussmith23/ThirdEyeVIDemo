@@ -1,4 +1,4 @@
-﻿namespace WristbandCsharp
+﻿namespace ThirdEyeVIDemo
 {
     partial class Form1
     {

@@ -20,7 +20,7 @@ using CAPIStreamServer;
 using System.Runtime.InteropServices;
 //using CAPIStreamClient;
 
-namespace WristbandCsharp
+namespace ThirdEyeVIDemo
 {
     public partial class Form1 : Form
     {

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.IO.Ports;
 using System.Drawing;
 
-namespace WristbandCsharp
+namespace ThirdEyeVIDemo
 {
     class Arduino
     {
