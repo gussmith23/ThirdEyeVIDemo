@@ -19,13 +19,36 @@ using Speech;
 using System.Threading;
 using ObjectSpeechRecognizer;
 using System.Runtime.InteropServices;
-using CAPIStreamClient;
+
 
 namespace WristbandCsharp
 {
-    class NetworkFetcher : FrameFetcher //implementing interface
+    class NetworkFetcher : IFrameFetcher  //implementing interface
     {
         ServerController server; //This creates a server object
+
+        public event EventHandler FrameFetched;//This 
+
+        object objectLock = new object();
+
+        event EventHandler IFrameFetcher.FrameFetched
+        {
+            add
+            {
+                lock (objectLock)
+                {
+                    FrameFetched += value;
+                }
+            }
+            remove
+            {
+                lock (objectLock)
+                {
+                    FrameFetched -= value;
+                }
+            }
+        }
+
 
         NetworkFetcher()//we don't want it to start until we tell it to start,
                         //therefore, start() is outside the constructor
@@ -34,15 +57,18 @@ namespace WristbandCsharp
         }
 
         public int Start()
-        {            
-            server.registerDelegate(CAPIStreamCommon.PacketType.VIDEO_FRAME, new ImageWork(doWorkOnData));
+        {
+           //server.registerDelegate(CAPIStreamCommon.PacketType.VIDEO_FRAME, new ImageWork(FetchImageFromNetwork));
             return 0;
         }
 
-        private byte[] doWorkOnData(SocketData s/*frame is passed*/)
+        private byte[] FetchImageFromNetwork(SocketData s/*frame is passed*/)
         {
-
+            FrameFetched?.Invoke(this, new EventArgs());
+            
             throw new NotImplementedException();
+
+            
         }
 
         public int Pause()

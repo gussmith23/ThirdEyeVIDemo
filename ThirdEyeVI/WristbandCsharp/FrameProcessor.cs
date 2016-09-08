@@ -12,6 +12,10 @@ namespace WristbandCsharp
 {
     interface FrameProcessor
     {
+        event EventHandler RawFrame;
+
+        event EventHandler FrameProcessed;
+        
         //eg of class would be CMT tracker
         int Start();
         int Pause();

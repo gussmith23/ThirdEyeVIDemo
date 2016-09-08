@@ -12,6 +12,7 @@
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -24,7 +25,6 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -101,8 +101,8 @@
     <Compile Include="AsyncObjectRecognizerWorker.cs" />
     <Compile Include="AsyncSpeechWorker.cs" />
     <Compile Include="FeedbackController.cs" />
-    <Compile Include="FrameFetcher.cs" />
     <Compile Include="FrameProcessor.cs" />
+    <Compile Include="IFrameFetcher.cs" />
     <Compile Include="NetworkFetcher.cs" />
     <Compile Include="SURFEngine.cs" />
     <Compile Include="Tracker.cs" />
@@ -191,6 +191,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\CAPIStreamCommon\CAPIStreamCommon.csproj">
+      <Project>{79D59FF1-DADF-4EED-8321-C36C38D65646}</Project>
+      <Name>CAPIStreamCommon</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\CAPIStreamServer\CAPIStreamServer.csproj">
       <Project>{15818dac-2d3c-4d64-a7c0-0f88499ce793}</Project>
       <Name>CAPIStreamServer</Name>
