@@ -199,24 +199,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\CAPIStreamCommon\CAPIStreamCommon.csproj">
-      <Project>{79D59FF1-DADF-4EED-8321-C36C38D65646}</Project>
-      <Name>CAPIStreamCommon</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\CAPIStreamServer\CAPIStreamServer.csproj">
-      <Project>{15818dac-2d3c-4d64-a7c0-0f88499ce793}</Project>
-      <Name>CAPIStreamServer</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\CMT_Tracker\CMT_Tracker\CMT_Tracker.csproj">
-      <Project>{041772d0-10c9-4f02-86d0-e2e985f48d38}</Project>
-      <Name>CMT_Tracker</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\ffmpeg_export\ffmpeg_export.vcxproj">
-      <Project>{357552a1-24a0-4b11-b9b9-3ce949e07a57}</Project>
-      <Name>ffmpeg_export</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">
       <Visible>False</Visible>
       <ProductName>Microsoft .NET Framework 4.5 %28x86 and x64%29</ProductName>
@@ -227,6 +209,20 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CAPIStreamCommon\CAPIStreamCommon.csproj">
+      <Project>{79d59ff1-dadf-4eed-8321-c36c38d65646}</Project>
+      <Name>CAPIStreamCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CAPIStreamServer\CAPIStreamServer.csproj">
+      <Project>{15818dac-2d3c-4d64-a7c0-0f88499ce793}</Project>
+      <Name>CAPIStreamServer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CMT_Tracker\CMT_Tracker\CMT_Tracker.csproj">
+      <Project>{041772d0-10c9-4f02-86d0-e2e985f48d38}</Project>
+      <Name>CMT_Tracker</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

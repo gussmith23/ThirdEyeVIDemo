@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThirdEyeVIDemo", "ThirdEyeVI\WristbandCsharp\ThirdEyeVIDemo.csproj", "{CD5327FB-3B05-4D84-8A3E-C95A3228F3F7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThirdEyeVIDemo", "ThirdEyeVIDemo\ThirdEyeVIDemo.csproj", "{CD5327FB-3B05-4D84-8A3E-C95A3228F3F7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CMT_Tracker", "CMT_Tracker\CMT_Tracker\CMT_Tracker.csproj", "{041772D0-10C9-4F02-86D0-E2E985F48D38}"
 EndProject
