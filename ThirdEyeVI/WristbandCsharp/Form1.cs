@@ -49,7 +49,7 @@ namespace WristbandCsharp
 
         #region declarations and initializations.
 
-        int camera = 0;
+        int camera = 2;
         Capture cap;
         Image<Bgr,Byte> image;
         Arduino arduino;
