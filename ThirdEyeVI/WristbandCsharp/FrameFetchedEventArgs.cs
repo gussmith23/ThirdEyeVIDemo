@@ -13,7 +13,7 @@ namespace WristbandCsharp
     public class FrameFetchedEventArgs: EventArgs
     {
         
-        public Image<Bgr,byte> Frame { get; set; }
+        public Image<Bgr,byte> Frame { get; set; } //Frame Recieved
 
      }
 }

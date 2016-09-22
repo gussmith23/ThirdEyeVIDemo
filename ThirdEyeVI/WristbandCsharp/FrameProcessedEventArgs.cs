@@ -10,6 +10,7 @@ namespace WristbandCsharp
 {
     public class FrameProcessedEventArgs
     {
-        public Image<Bgr, byte> Frame { get; set; }
+        public Image<Bgr, byte> Frame { get; set; } //Frame Processed
+        //ROI -> Rectangle
     }
 }

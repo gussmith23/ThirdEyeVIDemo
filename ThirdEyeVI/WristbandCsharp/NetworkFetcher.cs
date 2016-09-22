@@ -15,7 +15,6 @@ using Emgu.CV.UI;
 using Emgu.Util;
 using System.IO.Ports;
 using System.IO;
-using Speech;
 using System.Threading;
 using ObjectSpeechRecognizer;
 using System.Runtime.InteropServices;
@@ -29,7 +28,7 @@ namespace WristbandCsharp
     {    
 
         
-        public event FrameFetchedEventHandler FrameFetched;       
+        public event EventHandler<FrameFetchedEventArgs> FrameFetched;       
 
         protected virtual void OnFrameFetched(FrameFetchedEventArgs e)
         {
@@ -115,7 +114,7 @@ namespace WristbandCsharp
 
             // Contact Peter Zientara about this piece of code.
 
-            if (d == null) return null;
+            if (d == null ) return null;
 
             int size = stream_width * stream_height * 3;
             byte[] rgb_data = new byte[size];
