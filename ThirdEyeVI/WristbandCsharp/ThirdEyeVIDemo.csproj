@@ -100,6 +100,7 @@
     <Compile Include="Arduino.cs" />
     <Compile Include="AsyncObjectRecognizerWorker.cs" />
     <Compile Include="AsyncSpeechWorker.cs" />
+    <Compile Include="CMTROITracker.cs" />
     <Compile Include="FeedbackController.cs" />
     <Compile Include="FrameProcessor.cs" />
     <Compile Include="IFrameFetcher.cs" />
@@ -244,6 +245,10 @@
     <ProjectReference Include="..\..\CMT_Tracker\CMT_Tracker\CMT_Tracker.csproj">
       <Project>{041772d0-10c9-4f02-86d0-e2e985f48d38}</Project>
       <Name>CMT_Tracker</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\FindBestROIUtil\FindBestROIUtil\FindBestROIUtil.csproj">
+      <Project>{3da303b1-30e1-4ccd-ad93-e6c33e556411}</Project>
+      <Name>FindBestROIUtil</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

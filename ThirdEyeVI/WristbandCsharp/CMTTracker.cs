@@ -26,7 +26,6 @@ namespace WristbandCsharp
         const float errThreshold = 0.5f;
         PointF[] keypoints_tracked;
         int[] keypoint_classes;
-        public Rectangle roi;
 
         Image<Gray,Byte> itemImage;
         VectorOfKeyPoint itemKP;
@@ -43,6 +42,7 @@ namespace WristbandCsharp
 
         Bgr color = new Bgr(0,255,255);
         int thickness = 5;
+        bool Draw = true;
 
         /* 
          * This boolean specifies whether or not we'll use CMT to simplify tracking. 
@@ -58,6 +58,10 @@ namespace WristbandCsharp
 
         public CMTTracker(string directory) : this(new Image<Bgr, byte>(directory))
         {
+        }
+        public CMTTracker(Image<Bgr, Byte> roi, bool Draw) : this(roi)
+        {
+            this.Draw = Draw;
         }
 
         /// <summary>
@@ -134,7 +138,9 @@ namespace WristbandCsharp
             centerOfObject.X = roi.X + roi.Width / 2;
             centerOfObject.Y = roi.Y + roi.Height / 2;
 
-            return DrawROI(image);
+            CenterOfObject = new Point((int)centerOfObject.X, (int)centerOfObject.Y);
+
+            return Draw ? DrawROI(image) : image;
         }
 
         private Image<Bgr,byte> DrawROI(Image<Bgr, byte> image)
