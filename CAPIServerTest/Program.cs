@@ -42,7 +42,7 @@ namespace CAPIServerTest
 
         private static readonly bool h264_encode = true;
         //Create functions to pass as delegate
-        static byte[] handleGesture(SocketData d)
+        static SocketData handleGesture(SocketData d)
         {
             Console.WriteLine(d.message_type);
             model_idx++;
@@ -51,7 +51,7 @@ namespace CAPIServerTest
             offload_client.sendDataPacket(new SocketData(PacketType.MODEL_CHANGE, 1280, 720, 0, Encoding.ASCII.GetBytes(s)));
             return null;
         }
-        static byte[] processFrame(SocketData d)
+        static SocketData processFrame(SocketData d)
         {
             //Mat img = new Mat((int)d.stream_id, (int)d.message_id, Emgu.CV.CvEnum.DepthType.Cv8U, 4);
             //CvInvoke.Imdecode(d.data, Emgu.CV.CvEnum.LoadImageType.AnyColor, img);
