@@ -104,6 +104,7 @@
     <Compile Include="FeedbackController.cs" />
     <Compile Include="FrameFetchedEventArgs.cs" />
     <Compile Include="FrameProcessedEventArgs.cs" />
+    <Compile Include="FrameProcessor.cs" />
     <Compile Include="IFrameProcessor.cs" />
     <Compile Include="IFrameFetcher.cs" />
     <Compile Include="NetworkFetcher.cs" />
@@ -123,6 +124,7 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="WebcamFetcher.cs" />
     <Compile Include="WristbandCsharp.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
