@@ -1,12 +1,12 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using WristbandCsharp;
+using ThirdEyeVIDemo;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WristbandCsharp.Tests
+namespace ThirdEyeVIDemo.Tests
 {
     [TestClass()]
     public class WebcamFetcherTests

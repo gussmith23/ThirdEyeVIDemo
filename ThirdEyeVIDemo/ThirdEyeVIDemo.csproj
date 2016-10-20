@@ -101,8 +101,11 @@
     <Compile Include="AsyncObjectRecognizerWorker.cs" />
     <Compile Include="AsyncSpeechWorker.cs" />
     <Compile Include="FeedbackController.cs" />
+    <Compile Include="FrameFetchedEventArgs.cs" />
+    <Compile Include="FrameProcessedEventArgs.cs" />
     <Compile Include="FrameProcessor.cs" />
     <Compile Include="IFrameFetcher.cs" />
+    <Compile Include="IFrameProcessor.cs" />
     <Compile Include="NetworkFetcher.cs" />
     <Compile Include="SURFEngine.cs" />
     <Compile Include="Tracker.cs" />
@@ -122,6 +125,7 @@
     </Compile>
     <Compile Include="ThirdEyeVIDemo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WebcamFetcher.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -17,7 +17,7 @@ using System.Threading;
 using CAPIStreamServer;
 using System.Runtime.InteropServices;
 
-namespace WristbandCsharp
+namespace ThirdEyeVIDemo
 {
     public class WebcamFetcher : IFrameFetcher
     {

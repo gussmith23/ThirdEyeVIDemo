@@ -23,7 +23,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ffmpeg_export", "ffmpeg_exp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FindBestROIUtil", "FindBestROIUtil\FindBestROIUtil\FindBestROIUtil.csproj", "{3DA303B1-30E1-4CCD-AD93-E6C33E556411}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThirdEyeVIDemoTests", "ThirdEyeVI\ThirdEyeVIDemoTests\ThirdEyeVIDemoTests.csproj", "{0F3F3452-D2AD-4270-BC9A-A16370CACDB8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThirdEyeVIDemoTests", "ThirdEyeVIDemoTests\ThirdEyeVIDemoTests.csproj", "{0F3F3452-D2AD-4270-BC9A-A16370CACDB8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -125,6 +125,7 @@ Global
 		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
 		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
 		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Debug|Win32.Build.0 = Debug|Any CPU
 		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Debug|x64.ActiveCfg = Debug|x64
 		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Debug|x64.Build.0 = Debug|x64
 		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -132,6 +133,7 @@ Global
 		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|Win32.ActiveCfg = Release|Any CPU
+		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|Win32.Build.0 = Release|Any CPU
 		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|x64.ActiveCfg = Release|x64
 		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|x64.Build.0 = Release|x64
 		{4DA31846-37CD-4E6B-AE28-A3FB9EBA68F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -162,22 +164,6 @@ Global
 		{357552A1-24A0-4B11-B9B9-3CE949E07A57}.Release|Win32.Build.0 = Release|Win32
 		{357552A1-24A0-4B11-B9B9-3CE949E07A57}.Release|x64.ActiveCfg = Release|x64
 		{357552A1-24A0-4B11-B9B9-3CE949E07A57}.Release|x64.Build.0 = Release|x64
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Debug|Win32.ActiveCfg = Debug|Any CPU
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Debug|Win32.Build.0 = Debug|Any CPU
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Debug|x64.ActiveCfg = Debug|x64
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Debug|x64.Build.0 = Debug|x64
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|Any CPU.Build.0 = Release|Any CPU
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|Win32.ActiveCfg = Release|Any CPU
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|Win32.Build.0 = Release|Any CPU
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|x64.ActiveCfg = Release|x64
-		{15818DAC-2D3C-4D64-A7C0-0F88499CE793}.Release|x64.Build.0 = Release|x64
 		{0F3F3452-D2AD-4270-BC9A-A16370CACDB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0F3F3452-D2AD-4270-BC9A-A16370CACDB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F3F3452-D2AD-4270-BC9A-A16370CACDB8}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU

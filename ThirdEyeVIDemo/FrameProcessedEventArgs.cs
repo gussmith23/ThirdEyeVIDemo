@@ -5,12 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using Emgu.CV;
 using Emgu.CV.Structure;
+using System.Drawing;
 
-namespace WristbandCsharp
+namespace ThirdEyeVIDemo
 {
     public class FrameProcessedEventArgs
     {
-        public Image<Bgr, byte> Frame { get; set; } //Frame Processed
-        //ROI -> Rectangle
+        public Rectangle roi;
     }
 }

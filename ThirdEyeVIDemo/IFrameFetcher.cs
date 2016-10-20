@@ -3,22 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CAPIStreamServer;
 
 namespace ThirdEyeVIDemo
 {
-    interface IFrameFetcher
-    { 
-        //Raise event FrameFetched
-        event EventHandler FrameFetched;
 
+
+    interface IFrameFetcher
+    {
+        //Raise event FrameFetched
+        event EventHandler<FrameFetchedEventArgs> FrameFetched; //Event with Args
         int Start();
         int Pause();
         int Stop();
     }
 
-    class FrameFetchedEventArgs : EventArgs
-    {
-
-    }
 }

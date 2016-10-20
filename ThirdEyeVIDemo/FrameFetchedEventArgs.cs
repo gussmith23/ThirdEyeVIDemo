@@ -8,7 +8,7 @@ using Emgu.CV;
 using Emgu.CV.Structure;
 using Emgu.Util;
 
-namespace WristbandCsharp
+namespace ThirdEyeVIDemo
 {
     public class FrameFetchedEventArgs: EventArgs
     {
