@@ -49,7 +49,7 @@ namespace ThirdEyeVIDemo
 
         #region declarations and initializations.
 
-        int camera = 0;
+        int camera = 2;
         Capture cap;
         Image<Bgr,Byte> image;
         CMTTracker cmtTracker = null;
@@ -304,13 +304,14 @@ namespace ThirdEyeVIDemo
             {
                 // CMT + SURF
                 case 0:
-                    tracker = new CMTTracker(itemImage);
+                    // TODO changed this from tracker
+                    cmtTracker = new CMTTracker(itemImage);
                     break;
                 case 1:
                     throw new NotImplementedException("Write the code for Pure SURF tracking!");
                     break;
                 default:
-                    tracker = null;
+                    cmtTracker = null;
                     break;
             }
         }
@@ -399,7 +400,7 @@ namespace ThirdEyeVIDemo
 
                         //arduino.Process(tracker.roi, tracker.centerOfObject, new PointF(pictureBox1.Width / 2, pictureBox1.Height / 2));
                         arduino.SendPacket(CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(width / 2, height / 2)),
-                            100, 100);
+                            100, 10);
                     }
                     // COM Port died.
                     catch (System.IO.IOException ioException)
@@ -447,7 +448,7 @@ namespace ThirdEyeVIDemo
                 if (checkBox3.Checked)
                 {
                     // Get direction to force in
-                    int direction = CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(pictureBox1.Width / 2, pictureBox1.Height / 2));
+                    int direction = CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(width / 2, height / 2));
 
                     switch (direction)
                     {
