@@ -61,7 +61,7 @@ namespace ThirdEyeVIDemo
         private const string triggerPhrase = "locate";
         private List<string> itemsAvailableForLocation;
 
-        Tracker tracker = null;
+        //Tracker tracker = null;
 
         Thread objectRecognizerThread;
         AsyncObjectRecognizerWorker objectRecognizerWorker;
@@ -80,6 +80,7 @@ namespace ThirdEyeVIDemo
 
         // Show from cam handler.
         EventHandler ShowFromCamHandler;
+
 
         #endregion
 
@@ -304,13 +305,13 @@ namespace ThirdEyeVIDemo
             {
                 // CMT + SURF
                 case 0:
-                    tracker = new CMTTracker(itemImage);
+                    cmtTracker = new CMTTracker(itemImage);
                     break;
                 case 1:
                     throw new NotImplementedException("Write the code for Pure SURF tracking!");
                     break;
                 default:
-                    tracker = null;
+                    cmtTracker = null;
                     break;
             }
         }
@@ -370,13 +371,13 @@ namespace ThirdEyeVIDemo
             int height = (int)cap.GetCaptureProperty(Emgu.CV.CvEnum.CAP_PROP.CV_CAP_PROP_FRAME_HEIGHT);
 
 
-            // If a tracker (of any kind) is initialized:
-            if (tracker != null)
-            {
-                // Call Process on our tracker; will either process with CMT or SURF
-                returnimage = tracker.Process(image);
+            //// If a tracker (of any kind) is initialized:
+            //if (tracker != null)
+            //{
+            //    // Call Process on our tracker; will either process with CMT or SURF
+            //    returnimage = tracker.Process(image);
 
-            }
+            //}
 
             if (cmtTracker != null)
             {
@@ -389,17 +390,58 @@ namespace ThirdEyeVIDemo
 
                 }
 
+                // we want to aim people towards the upper half of the object. thus, we give them directions based on whether 
+                // the center of the camera's view is within the upper half of the ROI.
+                Rectangle targetBox = new Rectangle(cmtTracker.roi.Location, new Size(cmtTracker.roi.Width, cmtTracker.roi.Height/2));
+                Point centerOfScreen = new Point(width / 2, height / 2);
+                int direction = -1;
+                if (targetBox.Contains(centerOfScreen))
+                {
+                    // Forward
+                    direction = 5;
+                }
+                else
+                {
+                    // points from center to roi location.
+                    Point difference = Point.Subtract(targetBox.Location, new Size(centerOfScreen));
+
+                    if (centerOfScreen.Y < targetBox.Top)
+                    {
+                        // down
+                        direction = 3;
+                    }
+                    else if (centerOfScreen.Y > targetBox.Bottom)
+                    {
+                        // up
+                        direction = 1;
+                    }
+                    else if (centerOfScreen.X < targetBox.Left)
+                    {
+                        // right
+                        direction = 0;
+                    }
+                    else if (centerOfScreen.X > targetBox.Right)
+                    {
+                        // left
+                        direction = 2;
+                    }
+                }
+
                 #region haptic feedback (send to Arduino)
 
                 if (checkBox1.Checked)
                 {
                     try
                     {
-                        
+                        if (direction != -1)
+                        {
+                            arduino.SendPacket(direction, 100, 20);
+                            Console.WriteLine(direction);
+                        }
 
                         //arduino.Process(tracker.roi, tracker.centerOfObject, new PointF(pictureBox1.Width / 2, pictureBox1.Height / 2));
-                        arduino.SendPacket(CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(width / 2, height / 2)),
-                            100, 100);
+                        //arduino.SendPacket(CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(width / 2, height / 2)),
+                        //    100, 100);
                     }
                     // COM Port died.
                     catch (System.IO.IOException ioException)
@@ -415,9 +457,6 @@ namespace ThirdEyeVIDemo
 
                 if (checkBox2.Checked)
                 {
-                    // Get direction to force in
-                    int direction = CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(width / 2, height / 2));
-
                     switch (direction)
                     {
                         case 0:
@@ -446,9 +485,6 @@ namespace ThirdEyeVIDemo
                 #region text feedback
                 if (checkBox3.Checked)
                 {
-                    // Get direction to force in
-                    int direction = CMTTracker.findDirection(cmtTracker.centerOfObject, new PointF(pictureBox1.Width / 2, pictureBox1.Height / 2));
-
                     switch (direction)
                     {
                         case 0:
@@ -465,6 +501,9 @@ namespace ThirdEyeVIDemo
                             break;
                         case -1:
                             label5.Text = "";
+                            break;
+                        case 5:
+                            label5.Text = "forward";
                             break;
                     }
 
@@ -520,7 +559,7 @@ namespace ThirdEyeVIDemo
             // This statement is not really necessary, but i'm leaving it for now.
             cmtTracker = null;
 
-            tracker = null;
+            //tracker = null;
         }
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)

@@ -90,6 +90,7 @@ namespace ThirdEyeVIDemo
         {
             try
             {
+                if (thetaPercent == 5) return;
                 port.Write(new byte[] { 255, (byte)thetaPercent, (byte)intensityPercent, (byte)durationPercent, 0 }, 0, 5);
                 Console.WriteLine("{0} {1} {2}", thetaPercent, intensityPercent, durationPercent);
                 //char[] buf = new char[128];

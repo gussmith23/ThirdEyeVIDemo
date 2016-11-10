@@ -270,8 +270,6 @@ namespace ThirdEyeVIDemo
 
                 image.DrawPolyline(projectedPointsRounded, true, new Bgr(100, 0, 0), 10);
 
-                Console.WriteLine("Test!");
-                
             }
             
             return image;
