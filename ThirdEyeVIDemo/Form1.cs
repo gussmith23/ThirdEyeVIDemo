@@ -49,7 +49,7 @@ namespace ThirdEyeVIDemo
 
         #region declarations and initializations.
 
-        int camera = 0;
+        int camera = 2;
         Capture cap;
         Image<Bgr,Byte> image;
         CMTTracker cmtTracker = null;
@@ -80,6 +80,9 @@ namespace ThirdEyeVIDemo
 
         // Show from cam handler.
         EventHandler ShowFromCamHandler;
+
+        bool roiFrozen = false;
+        Rectangle previousRoi = Rectangle.Empty;
 
 
         #endregion
@@ -390,6 +393,13 @@ namespace ThirdEyeVIDemo
 
                 }
 
+                // Check if the ROI is frozen.
+                if (previousRoi != Rectangle.Empty)
+                {
+                    roiFrozen = cmtTracker.roi == previousRoi;
+                }
+                previousRoi = new Rectangle(cmtTracker.roi.Location, cmtTracker.roi.Size);
+
                 // we want to aim people towards the upper half of the object. thus, we give them directions based on whether 
                 // the center of the camera's view is within the upper half of the ROI.
                 Rectangle targetBox = new Rectangle(cmtTracker.roi.Location, new Size(cmtTracker.roi.Width, cmtTracker.roi.Height/2));
@@ -426,6 +436,10 @@ namespace ThirdEyeVIDemo
                         direction = 2;
                     }
                 }
+
+                // if the ROI is frozen, we want them to step back UNLESS it's telling them to move 
+                // forward.
+                if (roiFrozen && (direction != 5)) direction = -1;
 
                 #region haptic feedback (send to Arduino)
 

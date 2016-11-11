@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO.Ports;
 using System.Drawing;
+using System.Threading;
 
 namespace ThirdEyeVIDemo
 {
@@ -85,12 +86,13 @@ namespace ThirdEyeVIDemo
             }
         }
 
-
+        Object obj = new Object();
         public void SendPacket(int thetaPercent, int intensityPercent, int durationPercent)
         {
+            if (!Monitor.TryEnter(obj)) return;
+
             try
             {
-                if (thetaPercent == 5) return;
                 port.Write(new byte[] { 255, (byte)thetaPercent, (byte)intensityPercent, (byte)durationPercent, 0 }, 0, 5);
                 Console.WriteLine("{0} {1} {2}", thetaPercent, intensityPercent, durationPercent);
                 //char[] buf = new char[128];
@@ -100,6 +102,10 @@ namespace ThirdEyeVIDemo
             catch (System.IO.IOException e)
             {
                 throw new System.IO.IOException(string.Format("Could not write to port %s.", port.PortName));
+            }
+            finally
+            {
+                Monitor.Exit(obj);
             }
         }
 
